@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 
 export interface CartItem {
   id: string;
@@ -14,6 +14,7 @@ interface CartContextType {
   addItem: (item: Omit<CartItem, "quantity">) => void;
   removeItem: (id: string, size: string) => void;
   updateQuantity: (id: string, size: string, quantity: number) => void;
+  clearCart: () => void;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   totalItems: number;
@@ -23,17 +24,25 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("bae-cart") || "[]");
+    } catch {
+      return [];
+    }
+  });
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("bae-cart", JSON.stringify(items));
+  }, [items]);
 
   const addItem = (item: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === item.id && i.size === item.size);
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id && i.size === item.size
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
+          i.id === item.id && i.size === item.size ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
       return [...prev, { ...item, quantity: 1 }];
@@ -46,24 +55,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = (id: string, size: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(id, size);
-      return;
-    }
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === id && i.size === size ? { ...i, quantity } : i
-      )
-    );
+    if (quantity <= 0) { removeItem(id, size); return; }
+    setItems((prev) => prev.map((i) => (i.id === id && i.size === size ? { ...i, quantity } : i)));
   };
+
+  const clearCart = () => setItems([]);
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
   const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
-    <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, isOpen, setIsOpen, totalItems, totalPrice }}
-    >
+    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, isOpen, setIsOpen, totalItems, totalPrice }}>
       {children}
     </CartContext.Provider>
   );
