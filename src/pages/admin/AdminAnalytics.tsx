@@ -7,7 +7,7 @@ import {
 import { revenueData, salesByProduct, metrics } from "@/lib/admin-data";
 
 const timeRanges = ["7 days", "30 days", "90 days", "12 months"] as const;
-const COLORS = ["rgba(255,255,255,0.7)", "rgba(255,255,255,0.4)", "rgba(255,255,255,0.2)"];
+const COLORS = ["hsl(0,0%,0%)", "hsl(0,0%,30%)", "hsl(0,0%,60%)"];
 
 const customerGrowth = [
   { month: "Nov", customers: 42 },
@@ -21,9 +21,9 @@ const customerGrowth = [
 const ChartTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
     return (
-      <div className="bg-[hsl(0,0%,10%)] border border-white/10 rounded-md px-3 py-2 shadow-xl">
-        <p className="text-xs text-white/50">{label}</p>
-        <p className="text-sm font-semibold text-white">{typeof payload[0].value === "number" && payload[0].value > 100 ? `$${payload[0].value.toLocaleString()}` : payload[0].value}</p>
+      <div className="bg-background border border-border rounded-md px-3 py-2 shadow-lg">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-semibold text-foreground">{typeof payload[0].value === "number" && payload[0].value > 100 ? `$${payload[0].value.toLocaleString()}` : payload[0].value}</p>
       </div>
     );
   }
@@ -37,8 +37,8 @@ export default function AdminAnalytics() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white/90">Analytics</h1>
-          <p className="text-sm text-white/40 mt-0.5">Track performance and growth</p>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Analytics</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Track performance and growth</p>
         </div>
         <div className="flex items-center gap-1.5">
           {timeRanges.map((t) => (
@@ -47,8 +47,8 @@ export default function AdminAnalytics() {
               onClick={() => setRange(t)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 range === t
-                  ? "bg-white/10 text-white border border-white/[0.12]"
-                  : "text-white/30 hover:text-white/60 border border-transparent"
+                  ? "bg-foreground text-background border border-foreground"
+                  : "text-muted-foreground hover:text-foreground border border-transparent"
               }`}
             >
               {t}
@@ -58,60 +58,42 @@ export default function AdminAnalytics() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        {/* Revenue */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-5"
-        >
-          <h2 className="text-sm font-semibold text-white/70 mb-4">Revenue Trend</h2>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-background border border-border rounded-lg p-5">
+          <h2 className="text-sm font-semibold text-foreground/70 mb-4">Revenue Trend</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueData}>
                 <defs>
                   <linearGradient id="aGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(0,0%,100%)" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="hsl(0,0%,100%)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="hsl(0,0%,0%)" stopOpacity={0.08} />
+                    <stop offset="100%" stopColor="hsl(0,0%,0%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 11 }} tickFormatter={(v) => `$${v / 1000}k`} />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} tickFormatter={(v) => `$${v / 1000}k`} />
                 <Tooltip content={<ChartTooltip />} />
-                <Area type="monotone" dataKey="revenue" stroke="rgba(255,255,255,0.5)" strokeWidth={1.5} fill="url(#aGrad)" />
+                <Area type="monotone" dataKey="revenue" stroke="hsl(0,0%,0%)" strokeWidth={1.5} fill="url(#aGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
-        {/* Customer Growth */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-5"
-        >
-          <h2 className="text-sm font-semibold text-white/70 mb-4">Customer Growth</h2>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-background border border-border rounded-lg p-5">
+          <h2 className="text-sm font-semibold text-foreground/70 mb-4">Customer Growth</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={customerGrowth}>
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 11 }} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} />
                 <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="customers" fill="rgba(255,255,255,0.15)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="customers" fill="hsl(0,0%,0%)" fillOpacity={0.15} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
-        {/* Sales by Category */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-5"
-        >
-          <h2 className="text-sm font-semibold text-white/70 mb-4">Sales by Category</h2>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-background border border-border rounded-lg p-5">
+          <h2 className="text-sm font-semibold text-foreground/70 mb-4">Sales by Category</h2>
           <div className="h-64 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -122,7 +104,7 @@ export default function AdminAnalytics() {
                 </Pie>
                 <Tooltip content={<ChartTooltip />} />
                 <Legend
-                  formatter={(value) => <span className="text-xs text-white/50">{value}</span>}
+                  formatter={(value) => <span className="text-xs text-muted-foreground">{value}</span>}
                   iconType="circle"
                   iconSize={8}
                 />
@@ -131,14 +113,8 @@ export default function AdminAnalytics() {
           </div>
         </motion.div>
 
-        {/* Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-5 flex flex-col justify-center"
-        >
-          <h2 className="text-sm font-semibold text-white/70 mb-6">Period Summary</h2>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-background border border-border rounded-lg p-5 flex flex-col justify-center">
+          <h2 className="text-sm font-semibold text-foreground/70 mb-6">Period Summary</h2>
           <div className="space-y-5">
             {[
               { label: "Total Revenue", value: `$${metrics.totalRevenue.toLocaleString()}`, change: `+${metrics.revenueGrowth}%` },
@@ -147,10 +123,10 @@ export default function AdminAnalytics() {
               { label: "Conversion Rate", value: `${metrics.conversionRate}%`, change: `+${metrics.conversionGrowth}%` },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span className="text-sm text-white/40">{item.label}</span>
+                <span className="text-sm text-muted-foreground">{item.label}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-white/80">{item.value}</span>
-                  <span className="text-xs font-medium text-emerald-400">{item.change}</span>
+                  <span className="text-sm font-semibold text-foreground">{item.value}</span>
+                  <span className="text-xs font-medium text-emerald-600">{item.change}</span>
                 </div>
               </div>
             ))}
