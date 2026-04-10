@@ -127,7 +127,6 @@ export default function CartDrawer() {
                         transition={{
                           layout: { duration: 0.3 },
                           delay: index * 0.05,
-                          exit: { duration: 0.25 },
                         }}
                         className="flex gap-4 py-5 border-b border-border last:border-0"
                       >
@@ -222,7 +221,7 @@ export default function CartDrawer() {
                           <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="text-xs text-green-600 mb-3"
+                            className="text-xs text-accent-foreground mb-3"
                           >
                             Coupon applied!
                           </motion.p>
