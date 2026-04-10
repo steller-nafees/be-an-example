@@ -37,18 +37,18 @@ const containerVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.04 },
+    transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as const, staggerChildren: 0.04 },
   },
   exit: {
     opacity: 0,
     y: -4,
-    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 
 const columnVariants = {
   hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" as const } },
 };
 
 interface MegaMenuProps {
