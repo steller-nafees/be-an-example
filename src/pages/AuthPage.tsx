@@ -266,6 +266,7 @@ export default function AuthPage() {
               </p>
             </motion.div>
           </AnimatePresence>
+          )}
         </div>
       </div>
     </div>
