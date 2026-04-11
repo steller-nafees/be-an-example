@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import heroImg from "@/assets/collection-hoodies.jpg";
+import OTPVerification from "@/components/OTPVerification";
 
 type Mode = "login" | "signup" | "forgot";
 
