@@ -86,13 +86,22 @@ export default function AuthPage() {
       {/* Right: form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mb-10"
-          >
-            <ArrowLeft size={14} /> Back to shop
-          </Link>
+          {!showOTP && (
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mb-10"
+            >
+              <ArrowLeft size={14} /> Back to shop
+            </Link>
+          )}
 
+          {showOTP ? (
+            <OTPVerification
+              email={email}
+              onBack={() => setShowOTP(false)}
+              onSuccess={() => navigate("/")}
+            />
+          ) : (
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
