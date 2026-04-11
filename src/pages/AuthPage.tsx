@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import heroImg from "@/assets/collection-hoodies.jpg";
+import OTPVerification from "@/components/OTPVerification";
 
 type Mode = "login" | "signup" | "forgot";
 
 export default function AuthPage() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
+  const [showOTP, setShowOTP] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -44,7 +47,10 @@ export default function AuthPage() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => setLoading(false), 2000);
+    setTimeout(() => {
+      setLoading(false);
+      setShowOTP(true);
+    }, 1200);
   };
 
   const title = mode === "login" ? "Welcome back" : mode === "signup" ? "Join the movement" : "Reset password";
@@ -80,13 +86,22 @@ export default function AuthPage() {
       {/* Right: form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mb-10"
-          >
-            <ArrowLeft size={14} /> Back to shop
-          </Link>
+          {!showOTP && (
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mb-10"
+            >
+              <ArrowLeft size={14} /> Back to shop
+            </Link>
+          )}
 
+          {showOTP ? (
+            <OTPVerification
+              email={email}
+              onBack={() => setShowOTP(false)}
+              onSuccess={() => navigate("/")}
+            />
+          ) : (
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
@@ -251,6 +266,7 @@ export default function AuthPage() {
               </p>
             </motion.div>
           </AnimatePresence>
+          )}
         </div>
       </div>
     </div>
