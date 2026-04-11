@@ -47,7 +47,10 @@ export default function AuthPage() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => setLoading(false), 2000);
+    setTimeout(() => {
+      setLoading(false);
+      setShowOTP(true);
+    }, 1200);
   };
 
   const title = mode === "login" ? "Welcome back" : mode === "signup" ? "Join the movement" : "Reset password";
