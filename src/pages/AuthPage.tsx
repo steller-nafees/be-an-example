@@ -8,7 +8,9 @@ import OTPVerification from "@/components/OTPVerification";
 type Mode = "login" | "signup" | "forgot";
 
 export default function AuthPage() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
+  const [showOTP, setShowOTP] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
