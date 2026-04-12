@@ -3,40 +3,35 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Users,
+  Link2,
   BarChart3,
+  DollarSign,
+  Wallet,
   Settings,
   ChevronLeft,
-  Search,
-  Bell,
   Menu,
+  X,
   LogOut,
   User,
-  X,
-  UserPlus,
 } from "lucide-react";
 
 const navItems = [
-  { label: "Overview", path: "/admin", icon: LayoutDashboard },
-  { label: "Products", path: "/admin/products", icon: Package },
-  { label: "Orders", path: "/admin/orders", icon: ShoppingCart },
-  { label: "Customers", path: "/admin/customers", icon: Users },
-  { label: "Affiliates", path: "/admin/affiliates", icon: UserPlus },
-  { label: "Analytics", path: "/admin/analytics", icon: BarChart3 },
-  { label: "Settings", path: "/admin/settings", icon: Settings },
+  { label: "Overview", path: "/affiliate", icon: LayoutDashboard },
+  { label: "Links", path: "/affiliate/links", icon: Link2 },
+  { label: "Analytics", path: "/affiliate/analytics", icon: BarChart3 },
+  { label: "Earnings", path: "/affiliate/earnings", icon: DollarSign },
+  { label: "Payouts", path: "/affiliate/payouts", icon: Wallet },
+  { label: "Settings", path: "/affiliate/settings", icon: Settings },
 ];
 
-export default function AdminLayout() {
+export default function AffiliateLayout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
 
   const isActive = (path: string) =>
-    path === "/admin"
-      ? location.pathname === "/admin"
+    path === "/affiliate"
+      ? location.pathname === "/affiliate"
       : location.pathname.startsWith(path);
 
   const SidebarContent = () => (
@@ -56,7 +51,7 @@ export default function AdminLayout() {
           >
             {active && (
               <motion.div
-                layoutId="admin-nav-indicator"
+                layoutId="affiliate-nav-indicator"
                 className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-foreground rounded-full"
               />
             )}
@@ -79,7 +74,7 @@ export default function AdminLayout() {
         <div className="flex items-center justify-between h-14 px-4 border-b border-border">
           {!collapsed && (
             <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
-              BE AN EXAMPLE
+              Creator Hub
             </span>
           )}
           <button
@@ -106,7 +101,7 @@ export default function AdminLayout() {
         </div>
       </motion.aside>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {mobileOpen && (
           <>
@@ -126,12 +121,9 @@ export default function AdminLayout() {
             >
               <div className="flex items-center justify-between h-14 px-4 border-b border-border">
                 <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
-                  BE AN EXAMPLE
+                  Creator Hub
                 </span>
-                <button
-                  onClick={() => setMobileOpen(false)}
-                  className="p-1.5 text-muted-foreground hover:text-foreground"
-                >
+                <button onClick={() => setMobileOpen(false)} className="p-1.5 text-muted-foreground hover:text-foreground">
                   <X size={16} />
                 </button>
               </div>
@@ -143,82 +135,22 @@ export default function AdminLayout() {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
+      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar */}
         <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b border-border bg-background flex-shrink-0">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-1.5 text-muted-foreground hover:text-foreground"
-            >
+            <button onClick={() => setMobileOpen(true)} className="lg:hidden p-1.5 text-muted-foreground hover:text-foreground">
               <Menu size={20} />
             </button>
-            <div className="relative hidden sm:flex items-center">
-              <Search
-                size={14}
-                className="absolute left-3 text-muted-foreground"
-              />
-              <input
-                type="text"
-                placeholder="Search…"
-                className="h-8 w-56 bg-muted border border-border rounded-md pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 transition-colors"
-              />
-            </div>
+            <h1 className="text-sm font-semibold text-foreground/70">Affiliate Dashboard</h1>
           </div>
           <div className="flex items-center gap-2">
-            <button className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
-              <Bell size={18} strokeWidth={1.5} />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-accent rounded-full" />
-            </button>
-            <div className="relative">
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 p-1.5 rounded-md hover:bg-muted transition-colors"
-              >
-                <div className="w-7 h-7 rounded-full bg-foreground/10 flex items-center justify-center">
-                  <User size={14} className="text-muted-foreground" />
-                </div>
-                {!collapsed && (
-                  <span className="hidden md:block text-sm text-muted-foreground">Admin</span>
-                )}
-              </button>
-              <AnimatePresence>
-                {profileOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 4, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-1 w-48 bg-background border border-border rounded-md shadow-lg overflow-hidden z-50"
-                  >
-                    <div className="px-3 py-2.5 border-b border-border">
-                      <p className="text-sm font-medium text-foreground">Admin User</p>
-                      <p className="text-xs text-muted-foreground">admin@beanexample.com</p>
-                    </div>
-                    <Link
-                      to="/admin/settings"
-                      onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                    >
-                      <Settings size={14} />
-                      Settings
-                    </Link>
-                    <Link
-                      to="/"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                    >
-                      <LogOut size={14} />
-                      Sign Out
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            <div className="w-7 h-7 rounded-full bg-foreground/10 flex items-center justify-center">
+              <User size={14} className="text-muted-foreground" />
             </div>
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-muted/30">
           <AnimatePresence mode="wait">
             <motion.div

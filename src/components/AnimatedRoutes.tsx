@@ -2,6 +2,8 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "./PageTransition";
 import AdminLayout from "./admin/AdminLayout";
+import AffiliateLayout from "./affiliate/AffiliateLayout";
+import { useReferralTracking } from "@/hooks/use-referral-tracking";
 import Index from "@/pages/Index";
 import ShopPage from "@/pages/ShopPage";
 import ProductPage from "@/pages/ProductPage";
@@ -15,9 +17,18 @@ import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminCustomers from "@/pages/admin/AdminCustomers";
 import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminAffiliates from "@/pages/admin/AdminAffiliates";
+import AffiliateOverview from "@/pages/affiliate/AffiliateOverview";
+import AffiliateLinks from "@/pages/affiliate/AffiliateLinks";
+import AffiliateAnalytics from "@/pages/affiliate/AffiliateAnalytics";
+import AffiliateEarnings from "@/pages/affiliate/AffiliateEarnings";
+import AffiliatePayouts from "@/pages/affiliate/AffiliatePayouts";
+import AffiliateSettings from "@/pages/affiliate/AffiliateSettings";
+import AffiliateApply from "@/pages/affiliate/AffiliateApply";
 
 export default function AnimatedRoutes() {
   const location = useLocation();
+  useReferralTracking();
 
   return (
     <AnimatePresence mode="wait">
@@ -30,6 +41,19 @@ export default function AnimatedRoutes() {
         <Route path="/checkout" element={<PageTransition><CheckoutPage /></PageTransition>} />
         <Route path="/wishlist" element={<PageTransition><WishlistPage /></PageTransition>} />
 
+        {/* Affiliate Apply */}
+        <Route path="/affiliate/apply" element={<PageTransition><AffiliateApply /></PageTransition>} />
+
+        {/* Affiliate Dashboard */}
+        <Route path="/affiliate" element={<AffiliateLayout />}>
+          <Route index element={<AffiliateOverview />} />
+          <Route path="links" element={<AffiliateLinks />} />
+          <Route path="analytics" element={<AffiliateAnalytics />} />
+          <Route path="earnings" element={<AffiliateEarnings />} />
+          <Route path="payouts" element={<AffiliatePayouts />} />
+          <Route path="settings" element={<AffiliateSettings />} />
+        </Route>
+
         {/* Admin */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
@@ -37,6 +61,7 @@ export default function AnimatedRoutes() {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="customers" element={<AdminCustomers />} />
           <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="affiliates" element={<AdminAffiliates />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
