@@ -15,6 +15,7 @@ import {
   LogOut,
   User,
   X,
+  UserPlus,
 } from "lucide-react";
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { label: "Products", path: "/admin/products", icon: Package },
   { label: "Orders", path: "/admin/orders", icon: ShoppingCart },
   { label: "Customers", path: "/admin/customers", icon: Users },
+  { label: "Affiliates", path: "/admin/affiliates", icon: UserPlus },
   { label: "Analytics", path: "/admin/analytics", icon: BarChart3 },
   { label: "Settings", path: "/admin/settings", icon: Settings },
 ];
