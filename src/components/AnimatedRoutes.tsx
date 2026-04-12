@@ -3,6 +3,8 @@ import { AnimatePresence } from "framer-motion";
 import PageTransition from "./PageTransition";
 import AdminLayout from "./admin/AdminLayout";
 import AffiliateLayout from "./affiliate/AffiliateLayout";
+import { useReferralTracking } from "@/hooks/use-referral-tracking";
+import AffiliateLayout from "./affiliate/AffiliateLayout";
 import Index from "@/pages/Index";
 import ShopPage from "@/pages/ShopPage";
 import ProductPage from "@/pages/ProductPage";
