@@ -28,6 +28,7 @@ import AffiliateApply from "@/pages/affiliate/AffiliateApply";
 
 export default function AnimatedRoutes() {
   const location = useLocation();
+  useReferralTracking();
 
   return (
     <AnimatePresence mode="wait">
