@@ -16,6 +16,7 @@ import {
   User,
   X,
   UserPlus,
+  Shield,
 } from "lucide-react";
 
 const navItems = [
@@ -24,6 +25,7 @@ const navItems = [
   { label: "Orders", path: "/admin/orders", icon: ShoppingCart },
   { label: "Customers", path: "/admin/customers", icon: Users },
   { label: "Affiliates", path: "/admin/affiliates", icon: UserPlus },
+  { label: "Fraud", path: "/admin/fraud", icon: Shield },
   { label: "Analytics", path: "/admin/analytics", icon: BarChart3 },
   { label: "Settings", path: "/admin/settings", icon: Settings },
 ];
