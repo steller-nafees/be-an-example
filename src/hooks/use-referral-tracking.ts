@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { recordClick, checkCookieStuffing, checkRapidClicks } from "@/lib/fraud-detection";
 
 /**
  * Tracks referral codes from URL params (?ref=CODE) and stores in localStorage.
- * On any page load, if a ref param exists, it's saved with a 30-day expiry.
+ * Integrates fraud detection: records clicks, detects cookie stuffing & rapid clicks.
  */
 export function useReferralTracking() {
   const location = useLocation();
@@ -12,10 +13,26 @@ export function useReferralTracking() {
     const params = new URLSearchParams(location.search);
     const ref = params.get("ref");
     if (ref) {
+      // Record click for fraud detection
+      recordClick(ref);
+
+      // Check for cookie stuffing (multiple affiliate switches)
+      const cookieStuff = checkCookieStuffing(ref);
+      if (cookieStuff) {
+        console.warn("[Fraud] Cookie stuffing detected:", cookieStuff.details);
+      }
+
+      // Check for rapid clicks (bot behavior)
+      const rapidClicks = checkRapidClicks(ref);
+      if (rapidClicks) {
+        console.warn("[Fraud] Rapid clicks detected:", rapidClicks.details);
+      }
+
       const data = {
         code: ref,
         timestamp: Date.now(),
         landingPage: location.pathname,
+        fingerprint: navigator.userAgent,
       };
       localStorage.setItem("bae_referral", JSON.stringify(data));
     }
