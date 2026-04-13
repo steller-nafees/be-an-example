@@ -2,12 +2,12 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useEffect } from "react";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 
-interface MetricCardProps {
+export interface MetricCardProps {
   label: string;
   value: number;
   prefix?: string;
   suffix?: string;
-  growth: number;
+  growth?: number;
   icon: LucideIcon;
   index: number;
 }
@@ -27,7 +27,7 @@ function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: number; pr
 }
 
 export default function MetricCard({ label, value, prefix, suffix, growth, icon: Icon, index }: MetricCardProps) {
-  const isPositive = growth >= 0;
+  const isPositive = (growth ?? 0) >= 0;
 
   return (
     <motion.div
@@ -45,17 +45,19 @@ export default function MetricCard({ label, value, prefix, suffix, growth, icon:
       <div className="text-2xl font-bold tracking-tight text-foreground">
         <AnimatedNumber value={value} prefix={prefix} suffix={suffix} />
       </div>
-      <div className="flex items-center gap-1 mt-2">
-        {isPositive ? (
-          <TrendingUp size={12} className="text-emerald-600" />
-        ) : (
-          <TrendingDown size={12} className="text-red-500" />
-        )}
-        <span className={`text-xs font-medium ${isPositive ? "text-emerald-600" : "text-red-500"}`}>
-          {isPositive ? "+" : ""}{growth}%
-        </span>
-        <span className="text-xs text-muted-foreground">vs last month</span>
-      </div>
+      {growth !== undefined && (
+        <div className="flex items-center gap-1 mt-2">
+          {isPositive ? (
+            <TrendingUp size={12} className="text-emerald-600" />
+          ) : (
+            <TrendingDown size={12} className="text-red-500" />
+          )}
+          <span className={`text-xs font-medium ${isPositive ? "text-emerald-600" : "text-red-500"}`}>
+            {isPositive ? "+" : ""}{growth}%
+          </span>
+          <span className="text-xs text-muted-foreground">vs last month</span>
+        </div>
+      )}
     </motion.div>
   );
 }

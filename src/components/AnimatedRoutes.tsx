@@ -18,6 +18,7 @@ import AdminCustomers from "@/pages/admin/AdminCustomers";
 import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminAffiliates from "@/pages/admin/AdminAffiliates";
+import AdminFraud from "@/pages/admin/AdminFraud";
 import AffiliateOverview from "@/pages/affiliate/AffiliateOverview";
 import AffiliateLinks from "@/pages/affiliate/AffiliateLinks";
 import AffiliateAnalytics from "@/pages/affiliate/AffiliateAnalytics";
@@ -62,6 +63,7 @@ export default function AnimatedRoutes() {
           <Route path="customers" element={<AdminCustomers />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="affiliates" element={<AdminAffiliates />} />
+          <Route path="fraud" element={<AdminFraud />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
