@@ -1,4 +1,19 @@
-import { products, Product } from "./products";
+import type { Product } from "./products";
+
+// Lightweight stub products used by mock orders/customers only.
+// Real catalog now lives in the `products` table via `useProducts`.
+const stub = (id: string, name: string, price: number, image: string): Product => ({
+  id, name, price, image, images: [image], category: "hoodies",
+  sizes: ["M"], colors: [], description: "", rating: 5, reviews: 0, stock: 0,
+});
+const products: Product[] = [
+  stub("1", "Noir Essentials Hoodie", 89, "/products/product-hoodie-1.jpg"),
+  stub("2", "Statement Tee — Black", 45, "/products/product-tshirt-1.jpg"),
+  stub("3", "Clean Slate Tee", 45, "/products/product-tshirt-2.jpg"),
+  stub("4", "Sand Dune Hoodie", 89, "/products/product-hoodie-2.jpg"),
+  stub("5", "Legacy Hoodie — Charcoal", 95, "/products/product-hoodie-1.jpg"),
+  stub("6", "Mindset Tee — Oversize", 52, "/products/product-tshirt-1.jpg"),
+];
 
 export interface Order {
   id: string;

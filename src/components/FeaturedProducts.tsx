@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
-import { products } from "@/lib/products";
+import { useProducts } from "@/hooks/use-products";
 import ProductCard from "@/components/ProductCard";
 
 export default function FeaturedProducts() {
+  const { data: products = [] } = useProducts();
   const featured = products.slice(0, 4);
+
 
   return (
     <section id="shop" className="py-24 md:py-32 bg-background">

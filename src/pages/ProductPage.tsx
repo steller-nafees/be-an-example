@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, Heart, Star, ChevronLeft, Minus, Plus } from "lucide-react";
-import { getProductById, products } from "@/lib/products";
+import { useProduct, useProducts } from "@/hooks/use-products";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import Navbar from "@/components/Navbar";
@@ -12,7 +12,8 @@ import ProductCard from "@/components/ProductCard";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
-  const product = getProductById(id || "");
+  const { data: product, isLoading } = useProduct(id);
+  const { data: allProducts = [] } = useProducts();
   const { addItem } = useCart();
   const { toggle, isWishlisted } = useWishlist();
 
@@ -22,6 +23,13 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -34,7 +42,7 @@ export default function ProductPage() {
   }
 
   const liked = isWishlisted(product.id);
-  const related = products.filter((p) => p.id !== product.id).slice(0, 4);
+  const related = allProducts.filter((p) => p.id !== product.id).slice(0, 4);
 
   const handleAddToCart = () => {
     const size = selectedSize || product.sizes[2] || product.sizes[0];

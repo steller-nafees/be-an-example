@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 import MetricCard from "@/components/admin/MetricCard";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { metrics, revenueData, mockOrders } from "@/lib/admin-data";
-import { products } from "@/lib/products";
+import { useProducts } from "@/hooks/use-products";
 import { Link } from "react-router-dom";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -20,6 +20,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function AdminDashboard() {
+  const { data: products = [] } = useProducts();
   const recentOrders = mockOrders.slice(0, 5);
   const topProducts = products.slice(0, 4);
 

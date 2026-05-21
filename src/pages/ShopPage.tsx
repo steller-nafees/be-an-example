@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SlidersHorizontal, X, Search } from "lucide-react";
-import { products } from "@/lib/products";
+import { useProducts } from "@/hooks/use-products";
 import ProductCard from "@/components/ProductCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -17,11 +17,13 @@ const sortOptions = [
 ];
 
 export default function ShopPage() {
+  const { data: products = [] } = useProducts();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [sort, setSort] = useState("newest");
   const [filterOpen, setFilterOpen] = useState(false);
+
 
   const toggleSize = (s: string) =>
     setSelectedSizes((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
@@ -37,7 +39,7 @@ export default function ShopPage() {
       case "popular": result.sort((a, b) => b.reviews - a.reviews); break;
     }
     return result;
-  }, [search, category, selectedSizes, sort]);
+  }, [products, search, category, selectedSizes, sort]);
 
   return (
     <>

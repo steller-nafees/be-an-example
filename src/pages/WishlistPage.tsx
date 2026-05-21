@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useWishlist } from "@/context/WishlistContext";
-import { products } from "@/lib/products";
+import { useProducts } from "@/hooks/use-products";
 import ProductCard from "@/components/ProductCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -10,6 +10,7 @@ import CartDrawer from "@/components/CartDrawer";
 
 export default function WishlistPage() {
   const { items } = useWishlist();
+  const { data: products = [] } = useProducts();
   const wishlisted = products.filter((p) => items.includes(p.id));
 
   return (
