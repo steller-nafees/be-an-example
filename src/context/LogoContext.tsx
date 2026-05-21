@@ -39,9 +39,6 @@ export function LogoProvider({ children }: { children: ReactNode }) {
     setLogo(null);
   };
 
-  if (isLoading) {
-    return <>{children}</>;
-  }
 
   return (
     <LogoContext.Provider value={{ logo, setLogo, uploadLogo, removeLogo }}>
