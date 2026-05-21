@@ -21,8 +21,8 @@ export function LogoProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const uploadLogo = async (file: File) => {
-    return new Promise((resolve, reject) => {
+  const uploadLogo = async (file: File): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
