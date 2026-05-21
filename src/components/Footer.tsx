@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import { Instagram, Twitter } from "lucide-react";
+import { useLogo } from "@/context/LogoContext";
 
 export default function Footer() {
+  const { logo } = useLogo();
+
   return (
     <footer id="contact" className="bg-foreground text-primary-foreground py-20">
       <div className="container mx-auto px-6">
@@ -12,6 +15,11 @@ export default function Footer() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
+          {logo && (
+            <div className="flex justify-center mb-6">
+              <img src={logo} alt="Logo" className="h-12 object-contain invert" />
+            </div>
+          )}
           <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">
             Be the one others look up to.
           </h2>

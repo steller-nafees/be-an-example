@@ -3,7 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Check, CreditCard, Truck, MapPin, ClipboardList, Loader2, ShieldCheck, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
+import { useOrder } from "@/context/OrderContext";
 import Navbar from "@/components/Navbar";
+import Invoice from "@/components/Invoice";
+import InvoiceDownloadButton from "@/components/InvoiceDownload";
+import type { Order } from "@/context/OrderContext";
 
 const steps = [
   { label: "Shipping", icon: MapPin },
@@ -56,10 +60,12 @@ function FloatingInput({
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
+  const { addOrder } = useOrder();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
 
   const [shipping, setShipping] = useState({
@@ -83,6 +89,21 @@ export default function CheckoutPage() {
     } else {
       setLoading(true);
       setTimeout(() => {
+        // Calculate tax (10%)
+        const tax = totalPrice * 0.1;
+
+        // Create order object
+        const newOrder = addOrder({
+          customerInfo: shipping,
+          items,
+          shippingMethod: deliveryMethod as "standard" | "express" | "overnight",
+          deliveryFee: deliveryCost,
+          subtotal: totalPrice,
+          tax,
+          total: totalPrice + deliveryCost + tax,
+        });
+
+        setCreatedOrder(newOrder);
         setLoading(false);
         setOrderPlaced(true);
         clearCart();
@@ -95,73 +116,97 @@ export default function CheckoutPage() {
   };
 
   // Success screen
-  if (orderPlaced) {
+  if (orderPlaced && createdOrder) {
     return (
       <>
         <Navbar />
-        <main className="pt-24 pb-24 bg-background min-h-screen flex items-center justify-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center px-6 max-w-md"
-          >
-            {/* Animated checkmark */}
-            <div className="relative w-24 h-24 mx-auto mb-8">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="w-24 h-24 border-2 border-foreground flex items-center justify-center"
-              >
+        <main className="pt-24 pb-12 bg-background min-h-screen">
+          <div className="container mx-auto px-6 max-w-4xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="text-center mb-12"
+            >
+              {/* Animated checkmark */}
+              <div className="relative w-24 h-24 mx-auto mb-8">
                 <motion.div
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 0.4 }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  className="w-24 h-24 border-2 border-foreground flex items-center justify-center"
                 >
-                  <Check size={40} strokeWidth={1.5} className="text-foreground" />
+                  <motion.div
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.4 }}
+                  >
+                    <Check size={40} strokeWidth={1.5} className="text-foreground" />
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            </div>
+              </div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="text-2xl font-black tracking-tight text-foreground mb-3"
-            >
-              Order Placed Successfully
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              className="text-sm text-muted-foreground mb-2"
-            >
-              Thank you for shopping with BE AN EXAMPLE.
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="text-xs text-muted-foreground mb-10"
-            >
-              A confirmation email has been sent to your inbox.
-            </motion.p>
+              <motion.h1
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="text-2xl font-black tracking-tight text-foreground mb-3"
+              >
+                Order Placed Successfully
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="text-sm text-muted-foreground mb-2"
+              >
+                Thank you for shopping with BE AN EXAMPLE.
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                className="text-xs text-muted-foreground mb-10"
+              >
+                Order ID: <span className="font-semibold">{createdOrder.id}</span>
+              </motion.p>
+            </motion.div>
 
+            {/* Invoice */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
+              className="mb-12"
+            >
+              <Invoice order={createdOrder} />
+            </motion.div>
+
+            {/* Action buttons */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
+              transition={{ delay: 1 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
             >
+              <InvoiceDownloadButton
+                order={createdOrder}
+                contentId="invoice-content"
+              />
+              <Link
+                to="/orders"
+                className="inline-flex items-center justify-center px-6 py-2 border border-border rounded-md hover:bg-accent transition-colors text-sm font-medium"
+              >
+                View Order History
+              </Link>
               <Link
                 to="/"
-                className="inline-block px-12 py-4 bg-foreground text-primary-foreground text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground/90 transition-colors"
+                className="inline-block px-12 py-2 bg-foreground text-primary-foreground text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground/90 transition-colors rounded-md"
               >
                 Continue Shopping
               </Link>
             </motion.div>
-          </motion.div>
+          </div>
         </main>
       </>
     );

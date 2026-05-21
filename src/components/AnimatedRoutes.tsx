@@ -10,6 +10,7 @@ import ProductPage from "@/pages/ProductPage";
 import AuthPage from "@/pages/AuthPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import WishlistPage from "@/pages/WishlistPage";
+import OrderHistoryPage from "@/pages/OrderHistoryPage";
 import NotFound from "@/pages/NotFound";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminProducts from "@/pages/admin/AdminProducts";
@@ -41,6 +42,7 @@ export default function AnimatedRoutes() {
         <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
         <Route path="/checkout" element={<PageTransition><CheckoutPage /></PageTransition>} />
         <Route path="/wishlist" element={<PageTransition><WishlistPage /></PageTransition>} />
+        <Route path="/orders" element={<PageTransition><OrderHistoryPage /></PageTransition>} />
 
         {/* Affiliate Apply */}
         <Route path="/affiliate/apply" element={<PageTransition><AffiliateApply /></PageTransition>} />

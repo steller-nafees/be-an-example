@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Menu, X, Heart, User, ChevronDown, ChevronRight } from "lucide-react";
+import { ShoppingBag, Menu, X, Heart, User, ChevronDown, ChevronRight, Package } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useLogo } from "@/context/LogoContext";
 import { Link, useLocation } from "react-router-dom";
 import MegaMenu from "./MegaMenu";
 
@@ -47,6 +48,7 @@ export default function Navbar() {
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
   const { totalItems, setIsOpen } = useCart();
   const { count: wishCount } = useWishlist();
+  const { logo } = useLogo();
   const location = useLocation();
   const closeTimeout = useRef<ReturnType<typeof setTimeout>>();
 
@@ -56,13 +58,11 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close mega menu on route change
   useEffect(() => {
     setMegaOpen(false);
     setMobileOpen(false);
   }, [location.pathname]);
 
-  // Escape key
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -97,8 +97,14 @@ export default function Navbar() {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${bg}`}
       >
         <div className="container mx-auto flex items-center justify-between h-16 md:h-20 px-6">
-          <Link to="/" className="text-lg md:text-xl font-black tracking-[0.2em] text-foreground uppercase">
-            BE AN EXAMPLE
+          <Link to="/" className="flex items-center gap-2">
+            {logo ? (
+              <img src={logo} alt="Logo" className="h-8 md:h-10 object-contain" />
+            ) : (
+              <span className="text-lg md:text-xl font-black tracking-[0.2em] text-foreground uppercase">
+                BE AN EXAMPLE
+              </span>
+            )}
           </Link>
 
           {/* Desktop Nav */}
@@ -146,6 +152,9 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
+            <Link to="/orders" className="text-foreground hover:text-foreground/70 transition-colors hidden sm:block" title="My Orders">
+              <Package size={19} strokeWidth={1.5} />
+            </Link>
             <Link to="/auth" className="text-foreground hover:text-foreground/70 transition-colors hidden sm:block">
               <User size={19} strokeWidth={1.5} />
             </Link>
@@ -191,7 +200,13 @@ export default function Navbar() {
             className="fixed inset-0 z-[60] bg-background"
           >
             <div className="flex items-center justify-between h-16 px-6 border-b border-border">
-              <span className="text-lg font-black tracking-[0.2em] uppercase">BE AN EXAMPLE</span>
+              <Link to="/" className="flex items-center gap-2">
+                {logo ? (
+                  <img src={logo} alt="Logo" className="h-6 object-contain" />
+                ) : (
+                  <span className="text-lg font-black tracking-[0.2em] uppercase">BE AN EXAMPLE</span>
+                )}
+              </Link>
               <button onClick={() => setMobileOpen(false)}>
                 <X size={22} strokeWidth={1.5} />
               </button>

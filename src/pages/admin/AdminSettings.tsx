@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Upload, Save, CreditCard, User, Store } from "lucide-react";
+import { Upload, Save, CreditCard, User, Store, X } from "lucide-react";
+import { useLogo } from "@/context/LogoContext";
+import { useToast } from "@/hooks/use-toast";
 
 const tabs = [
   { id: "store", label: "Store", icon: Store },
@@ -10,6 +12,53 @@ const tabs = [
 
 export default function AdminSettings() {
   const [activeTab, setActiveTab] = useState<string>("store");
+  const { logo, uploadLogo, removeLogo } = useLogo();
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Logo must be smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      await uploadLogo(file);
+      toast({
+        title: "Logo uploaded successfully",
+        description: "Your logo has been updated across the store",
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload logo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -64,9 +113,53 @@ export default function AdminSettings() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Logo</label>
-                <div className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center gap-2 hover:border-foreground/20 transition-colors cursor-pointer">
-                  <Upload size={20} className="text-muted-foreground/40" />
-                  <p className="text-xs text-muted-foreground">Click to upload logo</p>
+                <div className="space-y-4">
+                  {logo ? (
+                    <div className="relative bg-muted rounded-lg p-4 border border-border">
+                      <img
+                        src={logo}
+                        alt="Store logo"
+                        className="max-h-32 max-w-full object-contain mx-auto"
+                      />
+                      <div className="flex gap-2 mt-4">
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="flex-1 px-3 py-2 text-xs font-semibold border border-border rounded-md text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50"
+                        >
+                          Change Logo
+                        </button>
+                        <button
+                          onClick={removeLogo}
+                          className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-semibold text-red-600 border border-red-600/20 rounded-md hover:bg-red-600/5 transition-colors"
+                        >
+                          <X size={14} />
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="w-full border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center gap-2 hover:border-foreground/20 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <Upload size={20} className="text-muted-foreground/40" />
+                      <p className="text-xs text-muted-foreground">
+                        {isUploading ? "Uploading..." : "Click to upload logo"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/60">
+                        PNG, JPG, GIF up to 5MB
+                      </p>
+                    </button>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
                 </div>
               </div>
             </div>

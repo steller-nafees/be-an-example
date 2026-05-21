@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLogo } from "@/context/LogoContext";
 import {
   LayoutDashboard,
   Package,
@@ -32,6 +33,7 @@ const navItems = [
 
 export default function AdminLayout() {
   const location = useLocation();
+  const { logo } = useLogo();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -80,9 +82,13 @@ export default function AdminLayout() {
       >
         <div className="flex items-center justify-between h-14 px-4 border-b border-border">
           {!collapsed && (
-            <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
-              BE AN EXAMPLE
-            </span>
+            logo ? (
+              <img src={logo} alt="Logo" className="h-6 object-contain" />
+            ) : (
+              <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
+                BE AN EXAMPLE
+              </span>
+            )
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -127,9 +133,13 @@ export default function AdminLayout() {
               className="fixed left-0 top-0 bottom-0 w-[240px] bg-background border-r border-border z-50 lg:hidden flex flex-col"
             >
               <div className="flex items-center justify-between h-14 px-4 border-b border-border">
-                <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
-                  BE AN EXAMPLE
-                </span>
+                {logo ? (
+                  <img src={logo} alt="Logo" className="h-6 object-contain" />
+                ) : (
+                  <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
+                    BE AN EXAMPLE
+                  </span>
+                )}
                 <button
                   onClick={() => setMobileOpen(false)}
                   className="p-1.5 text-muted-foreground hover:text-foreground"
