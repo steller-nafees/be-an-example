@@ -10,16 +10,13 @@ interface LogoContextType {
 const LogoContext = createContext<LogoContextType | undefined>(undefined);
 
 export function LogoProvider({ children }: { children: ReactNode }) {
-  const [logo, setLogo] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [logo, setLogo] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("brand-logo");
+  });
 
-  useEffect(() => {
-    const savedLogo = localStorage.getItem("brand-logo");
-    if (savedLogo) {
-      setLogo(savedLogo);
-    }
-    setIsLoading(false);
-  }, []);
+  useEffect(() => {}, []);
+
 
   const uploadLogo = async (file: File): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
@@ -42,9 +39,6 @@ export function LogoProvider({ children }: { children: ReactNode }) {
     setLogo(null);
   };
 
-  if (isLoading) {
-    return <>{children}</>;
-  }
 
   return (
     <LogoContext.Provider value={{ logo, setLogo, uploadLogo, removeLogo }}>
