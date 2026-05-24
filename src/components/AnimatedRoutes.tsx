@@ -4,6 +4,7 @@ import PageTransition from "./PageTransition";
 import AdminLayout from "./admin/AdminLayout";
 import AffiliateLayout from "./affiliate/AffiliateLayout";
 import { useReferralTracking } from "@/hooks/use-referral-tracking";
+import ProtectedRoute from "./ProtectedRoute";
 import Index from "@/pages/Index";
 import ShopPage from "@/pages/ShopPage";
 import ProductPage from "@/pages/ProductPage";
@@ -40,9 +41,9 @@ export default function AnimatedRoutes() {
         <Route path="/shop" element={<PageTransition><ShopPage /></PageTransition>} />
         <Route path="/product/:id" element={<PageTransition><ProductPage /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
-        <Route path="/checkout" element={<PageTransition><CheckoutPage /></PageTransition>} />
-        <Route path="/wishlist" element={<PageTransition><WishlistPage /></PageTransition>} />
-        <Route path="/orders" element={<PageTransition><OrderHistoryPage /></PageTransition>} />
+        <Route path="/checkout" element={<ProtectedRoute><PageTransition><CheckoutPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><PageTransition><WishlistPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute><PageTransition><OrderHistoryPage /></PageTransition></ProtectedRoute>} />
 
         {/* Affiliate Apply */}
         <Route path="/affiliate/apply" element={<PageTransition><AffiliateApply /></PageTransition>} />
@@ -58,7 +59,7 @@ export default function AnimatedRoutes() {
         </Route>
 
         {/* Admin */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminLayout /></ProtectedRoute>}>
           <Route index element={<AdminDashboard />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="orders" element={<AdminOrders />} />
