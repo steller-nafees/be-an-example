@@ -7,6 +7,7 @@ import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { OrderProvider } from "@/context/OrderContext";
 import { LogoProvider } from "@/context/LogoContext";
+import { AuthProvider } from "@/context/AuthContext";
 import AnimatedRoutes from "@/components/AnimatedRoutes";
 
 const queryClient = new QueryClient();
@@ -14,19 +15,21 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <LogoProvider>
-        <WishlistProvider>
-          <CartProvider>
-            <OrderProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <AnimatedRoutes />
-              </BrowserRouter>
-            </OrderProvider>
-          </CartProvider>
-        </WishlistProvider>
-      </LogoProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <LogoProvider>
+            <WishlistProvider>
+              <CartProvider>
+                <OrderProvider>
+                  <Toaster />
+                  <Sonner />
+                  <AnimatedRoutes />
+                </OrderProvider>
+              </CartProvider>
+            </WishlistProvider>
+          </LogoProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
