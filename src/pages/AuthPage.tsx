@@ -1,18 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, Navigate } from "react-router-dom";
 import heroImg from "@/assets/collection-hoodies.jpg";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 type Mode = "login" | "signup" | "forgot";
 
+const dashFor = (r: string | null) =>
+  r === "admin" ? "/admin" : r === "affiliate" ? "/affiliate" : "/account";
+
 export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, resetPassword } = useAuth();
-  const redirectTo = (location.state as any)?.from || "/";
+  const { signIn, signUp, resetPassword, user, role, loading: authLoading } = useAuth();
+  const redirectTo = (location.state as any)?.from as string | undefined;
 
   const [mode, setMode] = useState<Mode>("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,6 +26,13 @@ export default function AuthPage() {
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmSent, setConfirmSent] = useState(false);
+
+  // If already signed in, bounce to the right dashboard
+  if (!authLoading && user) {
+    return <Navigate to={redirectTo || dashFor(role)} replace />;
+  }
+
+
 
   const passwordStrength = (() => {
     if (password.length === 0) return 0;
@@ -54,14 +64,14 @@ export default function AuthPage() {
     setLoading(true);
 
     if (mode === "login") {
-      const { error } = await signIn(email, password);
+      const { error, role: r } = await signIn(email, password);
       setLoading(false);
       if (error) {
         toast.error(error);
         return;
       }
       toast.success("Welcome back");
-      navigate(redirectTo, { replace: true });
+      navigate(redirectTo || dashFor(r), { replace: true });
     } else if (mode === "signup") {
       const { error, needsConfirm } = await signUp(email, password, name);
       setLoading(false);
@@ -73,7 +83,7 @@ export default function AuthPage() {
         setConfirmSent(true);
       } else {
         toast.success("Account created");
-        navigate(redirectTo, { replace: true });
+        navigate(redirectTo || "/account", { replace: true });
       }
     } else {
       const { error } = await resetPassword(email);

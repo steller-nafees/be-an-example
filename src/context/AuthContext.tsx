@@ -9,7 +9,8 @@ interface AuthContextValue {
   session: Session | null;
   role: Role;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null; role: Role }>;
+  dashboardPath: () => string;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null; needsConfirm: boolean }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -62,9 +63,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const resolveRole = async (uid: string): Promise<Role> => {
+    const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+    if (!data || data.length === 0) return "customer";
+    const roles = data.map((r: any) => r.role);
+    if (roles.includes("admin")) return "admin";
+    if (roles.includes("affiliate")) return "affiliate";
+    return "customer";
+  };
+
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message ?? null };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message, role: null };
+    const r = data.user ? await resolveRole(data.user.id) : null;
+    setRole(r);
+    return { error: null, role: r };
+  };
+
+  const dashboardPath = () => {
+    if (role === "admin") return "/admin";
+    if (role === "affiliate") return "/affiliate";
+    return "/account";
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
@@ -94,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, role, loading, signIn, signUp, resetPassword, signOut }}>
+    <AuthContext.Provider value={{ user, session, role, loading, signIn, signUp, resetPassword, signOut, dashboardPath }}>
       {children}
     </AuthContext.Provider>
   );

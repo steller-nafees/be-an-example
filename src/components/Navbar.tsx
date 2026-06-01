@@ -4,6 +4,7 @@ import { ShoppingBag, Menu, X, Heart, User, ChevronDown, ChevronRight, Package }
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useLogo } from "@/context/LogoContext";
+import { useAuth } from "@/context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
 import MegaMenu from "./MegaMenu";
 
@@ -49,6 +50,8 @@ export default function Navbar() {
   const { totalItems, setIsOpen } = useCart();
   const { count: wishCount } = useWishlist();
   const { logo } = useLogo();
+  const { user, role } = useAuth();
+  const accountHref = !user ? "/auth" : role === "admin" ? "/admin" : role === "affiliate" ? "/affiliate" : "/account";
   const location = useLocation();
   const closeTimeout = useRef<ReturnType<typeof setTimeout>>();
 
@@ -152,10 +155,10 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
-            <Link to="/orders" className="text-foreground hover:text-foreground/70 transition-colors hidden sm:block" title="My Orders">
+            <Link to={user ? "/account" : "/auth"} className="text-foreground hover:text-foreground/70 transition-colors hidden sm:block" title="My Orders">
               <Package size={19} strokeWidth={1.5} />
             </Link>
-            <Link to="/auth" className="text-foreground hover:text-foreground/70 transition-colors hidden sm:block">
+            <Link to={accountHref} className="text-foreground hover:text-foreground/70 transition-colors hidden sm:block" title={user ? "My account" : "Sign in"}>
               <User size={19} strokeWidth={1.5} />
             </Link>
             <button
