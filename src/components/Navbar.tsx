@@ -158,7 +158,7 @@ export default function Navbar() {
             <Link to="/orders" className="text-foreground hover:text-foreground/70 transition-colors hidden sm:block" title="My Orders">
               <Package size={19} strokeWidth={1.5} />
             </Link>
-            <Link to="/auth" className="text-foreground hover:text-foreground/70 transition-colors hidden sm:block">
+            <Link to={accountHref} className="text-foreground hover:text-foreground/70 transition-colors hidden sm:block" title={user ? "My account" : "Sign in"}>
               <User size={19} strokeWidth={1.5} />
             </Link>
             <button
