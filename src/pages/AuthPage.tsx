@@ -57,14 +57,14 @@ export default function AuthPage() {
     setLoading(true);
 
     if (mode === "login") {
-      const { error } = await signIn(email, password);
+      const { error, role: r } = await signIn(email, password);
       setLoading(false);
       if (error) {
         toast.error(error);
         return;
       }
       toast.success("Welcome back");
-      navigate(redirectTo, { replace: true });
+      navigate(redirectTo || dashFor(r), { replace: true });
     } else if (mode === "signup") {
       const { error, needsConfirm } = await signUp(email, password, name);
       setLoading(false);
