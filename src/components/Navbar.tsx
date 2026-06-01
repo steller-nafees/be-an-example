@@ -50,6 +50,8 @@ export default function Navbar() {
   const { totalItems, setIsOpen } = useCart();
   const { count: wishCount } = useWishlist();
   const { logo } = useLogo();
+  const { user, role } = useAuth();
+  const accountHref = !user ? "/auth" : role === "admin" ? "/admin" : role === "affiliate" ? "/affiliate" : "/account";
   const location = useLocation();
   const closeTimeout = useRef<ReturnType<typeof setTimeout>>();
 
