@@ -76,7 +76,7 @@ export default function AuthPage() {
         setConfirmSent(true);
       } else {
         toast.success("Account created");
-        navigate(redirectTo, { replace: true });
+        navigate(redirectTo || "/account", { replace: true });
       }
     } else {
       const { error } = await resetPassword(email);
