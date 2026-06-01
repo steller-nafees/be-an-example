@@ -4,6 +4,7 @@ import { ShoppingBag, Menu, X, Heart, User, ChevronDown, ChevronRight, Package }
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useLogo } from "@/context/LogoContext";
+import { useAuth } from "@/context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
 import MegaMenu from "./MegaMenu";
 
