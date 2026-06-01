@@ -12,6 +12,8 @@ import AuthPage from "@/pages/AuthPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import WishlistPage from "@/pages/WishlistPage";
 import OrderHistoryPage from "@/pages/OrderHistoryPage";
+import AccountPage from "@/pages/AccountPage";
+import OrderTrackPage from "@/pages/OrderTrackPage";
 import NotFound from "@/pages/NotFound";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminProducts from "@/pages/admin/AdminProducts";
