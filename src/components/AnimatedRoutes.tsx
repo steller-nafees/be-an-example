@@ -46,6 +46,8 @@ export default function AnimatedRoutes() {
         <Route path="/checkout" element={<ProtectedRoute><PageTransition><CheckoutPage /></PageTransition></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><PageTransition><WishlistPage /></PageTransition></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><PageTransition><OrderHistoryPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/orders/:id" element={<ProtectedRoute><PageTransition><OrderTrackPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/account" element={<ProtectedRoute><PageTransition><AccountPage /></PageTransition></ProtectedRoute>} />
 
         {/* Affiliate Apply */}
         <Route path="/affiliate/apply" element={<PageTransition><AffiliateApply /></PageTransition>} />
