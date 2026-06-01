@@ -27,6 +27,13 @@ export default function AuthPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmSent, setConfirmSent] = useState(false);
 
+  // If already signed in, bounce to the right dashboard
+  if (!authLoading && user) {
+    return <Navigate to={redirectTo || dashFor(role)} replace />;
+  }
+
+
+
   const passwordStrength = (() => {
     if (password.length === 0) return 0;
     let s = 0;
