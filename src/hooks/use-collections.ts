@@ -11,7 +11,7 @@ export interface Collection {
   created_at?: string
 }
 
-export type CollectionInput = Omit<Collection, 'created_at'> & { id?: string }
+export type CollectionInput = Partial<Pick<Collection, 'id'>> & Omit<Collection, 'id' | 'created_at'>
 
 const TABLE = 'collections'
 
