@@ -5,6 +5,7 @@ import { useLogo } from "@/context/LogoContext";
 import {
   LayoutDashboard,
   Package,
+  Layers,
   ShoppingCart,
   Users,
   BarChart3,
@@ -22,6 +23,7 @@ import {
 
 const navItems = [
   { label: "Overview", path: "/admin", icon: LayoutDashboard },
+  { label: "Collections", path: "/admin/collections", icon: Layers },
   { label: "Products", path: "/admin/products", icon: Package },
   { label: "Orders", path: "/admin/orders", icon: ShoppingCart },
   { label: "Customers", path: "/admin/customers", icon: Users },
