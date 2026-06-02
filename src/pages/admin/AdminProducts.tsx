@@ -30,7 +30,6 @@ import {
   type SaveColorInput,
 } from "@/hooks/use-variants";
 import StatusBadge from "@/components/admin/StatusBadge";
-import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
