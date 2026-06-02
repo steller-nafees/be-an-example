@@ -20,6 +20,7 @@ export interface Product {
   reviews: number
   stock: number
   published?: boolean
+  collection_id?: string | null
   created_at?: string
 }
 
