@@ -213,6 +213,7 @@ export default function AdminCollections() {
                 </button>
               </div>
             </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence></ModalPortal>
