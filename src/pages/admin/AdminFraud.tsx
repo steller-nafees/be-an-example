@@ -340,7 +340,7 @@ export default function AdminFraud() {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence></ModalPortal>
     </div>
   );
 }
