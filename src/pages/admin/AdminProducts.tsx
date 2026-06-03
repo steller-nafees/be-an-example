@@ -497,6 +497,7 @@ export default function AdminProducts() {
                 </button>
               </div>
             </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence></ModalPortal>
