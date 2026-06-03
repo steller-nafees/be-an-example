@@ -329,12 +329,13 @@ export default function AdminProducts() {
         {editing && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} className="fixed inset-0 bg-foreground/30 z-50" />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[720px] md:max-h-[90vh] bg-background border border-border rounded-lg z-50 overflow-y-auto shadow-xl"
+              className="w-full md:w-[720px] max-h-[90vh] bg-background border border-border rounded-lg overflow-y-auto shadow-xl pointer-events-auto"
             >
               <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-background z-10">
                 <h2 className="text-base font-bold">{editingIsExisting ? "Edit product" : "Add product"}</h2>
