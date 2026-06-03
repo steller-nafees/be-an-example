@@ -20,6 +20,7 @@ import {
   FraudAlert,
   FraudAlertStatus,
 } from "@/lib/fraud-detection";
+import ModalPortal from "@/components/ModalPortal";
 
 const statusConfig: Record<FraudAlertStatus, { label: string; className: string }> = {
   pending_review: { label: "Pending", className: "bg-amber-50 text-amber-700 border-amber-200" },
@@ -223,7 +224,7 @@ export default function AdminFraud() {
       </motion.div>
 
       {/* Detail Modal */}
-      <AnimatePresence>
+      <ModalPortal><AnimatePresence>
         {selectedAlert && (
           <>
             <motion.div

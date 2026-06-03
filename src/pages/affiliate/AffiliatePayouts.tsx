@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Wallet, X } from "lucide-react";
 import { mockPayouts, mockAffiliates } from "@/lib/affiliate-data";
 import StatusBadge from "@/components/admin/StatusBadge";
+import ModalPortal from "@/components/ModalPortal";
 
 const affiliate = mockAffiliates[0];
 
@@ -96,7 +97,7 @@ export default function AffiliatePayouts() {
       </motion.div>
 
       {/* Payout Request Modal */}
-      <AnimatePresence>
+      <ModalPortal><AnimatePresence>
         {showRequest && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -149,7 +150,7 @@ export default function AffiliatePayouts() {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence></ModalPortal>
     </div>
   );
 }
