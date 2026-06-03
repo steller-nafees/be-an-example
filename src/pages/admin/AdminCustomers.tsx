@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ShoppingBag } from "lucide-react";
 import { mockCustomers, Customer, mockOrders } from "@/lib/admin-data";
+import ModalPortal from "@/components/ModalPortal";
 
 export default function AdminCustomers() {
   const [search, setSearch] = useState("");
@@ -77,7 +78,7 @@ export default function AdminCustomers() {
       </motion.div>
 
       {/* Customer Detail Drawer */}
-      <AnimatePresence>
+      <ModalPortal><AnimatePresence>
         {selected && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelected(null)} className="fixed inset-0 bg-foreground/20 z-50" />
@@ -143,7 +144,7 @@ export default function AdminCustomers() {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence></ModalPortal>
     </div>
   );
 }

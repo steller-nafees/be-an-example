@@ -23,6 +23,7 @@ import {
   type ProductInput,
 } from "@/hooks/use-products";
 import { useCollections } from "@/hooks/use-collections";
+import ModalPortal from "@/components/ModalPortal";
 import {
   useProductColors,
   useProductVariants,
@@ -324,7 +325,7 @@ export default function AdminProducts() {
         </div>
       )}
 
-      <AnimatePresence>
+      <ModalPortal><AnimatePresence>
         {editing && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} className="fixed inset-0 bg-foreground/30 z-50" />
@@ -497,7 +498,7 @@ export default function AdminProducts() {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence></ModalPortal>
     </div>
   );
 }

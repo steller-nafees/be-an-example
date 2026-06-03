@@ -7,6 +7,7 @@ import Invoice from "@/components/Invoice";
 import InvoiceDownloadButton from "@/components/InvoiceDownload";
 import { useOrder } from "@/context/OrderContext";
 import type { Order } from "@/context/OrderContext";
+import ModalPortal from "@/components/ModalPortal";
 
 export default function OrderHistoryPage() {
   const { orders } = useOrder();
@@ -55,7 +56,7 @@ export default function OrderHistoryPage() {
       </main>
 
       {/* Invoice Modal */}
-      {selectedOrder && (
+      {selectedOrder && (<ModalPortal>
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-border p-4 flex items-center justify-between">
@@ -86,7 +87,7 @@ export default function OrderHistoryPage() {
             </div>
           </div>
         </div>
-      )}
+      </ModalPortal>)}
     </div>
   );
 }

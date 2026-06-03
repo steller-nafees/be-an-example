@@ -10,6 +10,7 @@ import {
 } from "@/hooks/use-collections";
 import { uploadProductImage } from "@/hooks/use-products";
 import { toast } from "@/hooks/use-toast";
+import ModalPortal from "@/components/ModalPortal";
 
 const empty = (): CollectionInput => ({
   slug: "",
@@ -127,7 +128,7 @@ export default function AdminCollections() {
         )}
       </div>
 
-      <AnimatePresence>
+      <ModalPortal><AnimatePresence>
         {editing && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -213,7 +214,7 @@ export default function AdminCollections() {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence></ModalPortal>
     </div>
   );
 }

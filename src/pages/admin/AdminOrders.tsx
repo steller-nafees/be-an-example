@@ -4,6 +4,7 @@ import { Search, X, Package, Truck, CheckCircle, Clock, XCircle, Loader2 } from 
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import StatusBadge from "@/components/admin/StatusBadge";
+import ModalPortal from "@/components/ModalPortal";
 
 const statusFilters = ["all", "pending", "processing", "shipped", "delivered", "cancelled"] as const;
 const statusOptions = ["pending", "processing", "shipped", "delivered", "cancelled"] as const;
@@ -222,7 +223,7 @@ export default function AdminOrders() {
       </motion.div>
 
       {/* Order Detail Drawer */}
-      <AnimatePresence>
+      <ModalPortal><AnimatePresence>
         {selected && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedId(null)} className="fixed inset-0 bg-foreground/20 z-50" />
@@ -328,7 +329,7 @@ export default function AdminOrders() {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence></ModalPortal>
     </div>
   );
 }
