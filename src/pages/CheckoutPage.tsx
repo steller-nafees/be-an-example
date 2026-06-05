@@ -8,6 +8,10 @@ import Navbar from "@/components/Navbar";
 import Invoice from "@/components/Invoice";
 import InvoiceDownloadButton from "@/components/InvoiceDownload";
 import type { Order } from "@/context/OrderContext";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
+import { getReferralCode } from "@/hooks/use-referral-tracking";
+import { toast } from "@/hooks/use-toast";
 
 const steps = [
   { label: "Shipping", icon: MapPin },
@@ -61,6 +65,7 @@ function FloatingInput({
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const { addOrder } = useOrder();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -83,32 +88,75 @@ export default function CheckoutPage() {
     setStep(newStep);
   };
 
-  const next = () => {
+  const next = async () => {
     if (step < 3) {
       goTo(step + 1);
-    } else {
-      setLoading(true);
-      setTimeout(() => {
-        // Calculate tax (10%)
-        const tax = totalPrice * 0.1;
+      return;
+    }
+    setLoading(true);
+    const tax = totalPrice * 0.1;
+    const grandTotal = totalPrice + deliveryCost + tax;
+    const affiliateCode = getReferralCode();
 
-        // Create order object
-        const newOrder = addOrder({
-          customerInfo: shipping,
-          items,
-          shippingMethod: deliveryMethod as "standard" | "express" | "overnight",
-          deliveryFee: deliveryCost,
+    // local order (keeps UI flow working)
+    const newOrder = addOrder({
+      customerInfo: shipping,
+      items,
+      shippingMethod: deliveryMethod as "standard" | "express" | "overnight",
+      deliveryFee: deliveryCost,
+      subtotal: totalPrice,
+      tax,
+      total: grandTotal,
+    });
+
+    // persist to Supabase
+    if (user) {
+      const { data: dbOrder, error: orderErr } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          email: shipping.email || user.email,
+          first_name: shipping.firstName,
+          last_name: shipping.lastName,
+          phone: shipping.phone,
+          address: shipping.address,
+          city: shipping.city,
+          state: shipping.state,
+          zip: shipping.zip,
+          shipping_method: deliveryMethod,
+          delivery_fee: deliveryCost,
           subtotal: totalPrice,
           tax,
-          total: totalPrice + deliveryCost + tax,
-        });
-
-        setCreatedOrder(newOrder);
-        setLoading(false);
-        setOrderPlaced(true);
-        clearCart();
-      }, 2000);
+          total: grandTotal,
+          status: "pending",
+          affiliate_code: affiliateCode,
+        })
+        .select()
+        .single();
+      if (orderErr) {
+        toast({ title: "Order save failed", description: orderErr.message, variant: "destructive" });
+      } else if (dbOrder) {
+        await supabase.from("order_items").insert(
+          items.map((it: any) => ({
+            order_id: dbOrder.id,
+            product_id: String(it.id),
+            name: it.name,
+            image: it.image,
+            size: it.size ?? null,
+            color: it.color ?? null,
+            price: it.price,
+            quantity: it.quantity,
+          })),
+        );
+      }
+    } else {
+      toast({ title: "Tip", description: "Sign in to track this order in your account." });
     }
+
+    setCreatedOrder(newOrder);
+    setLoading(false);
+    setOrderPlaced(true);
+    clearCart();
   };
 
   const back = () => {
