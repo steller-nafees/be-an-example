@@ -1,27 +1,67 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ShoppingBag } from "lucide-react";
-import { mockCustomers, Customer, mockOrders } from "@/lib/admin-data";
 import ModalPortal from "@/components/ModalPortal";
+import { useAdminOrders, useAdminProfiles } from "@/hooks/use-admin-data";
+
+interface CustomerAgg {
+  id: string;
+  name: string;
+  email: string;
+  totalOrders: number;
+  totalSpend: number;
+  joinedDate: string;
+}
 
 export default function AdminCustomers() {
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Customer | null>(null);
+  const [selected, setSelected] = useState<CustomerAgg | null>(null);
+  const { data: profiles = [] } = useAdminProfiles();
+  const { data: orders = [] } = useAdminOrders();
 
-  const filtered = mockCustomers.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase())
+  const customers: CustomerAgg[] = useMemo(() => {
+    const map = new Map<string, CustomerAgg>();
+    profiles.forEach((p) => {
+      const email = p.email || "(no email)";
+      map.set(email, {
+        id: p.id,
+        name: p.full_name || email.split("@")[0],
+        email,
+        totalOrders: 0,
+        totalSpend: 0,
+        joinedDate: p.created_at.slice(0, 10),
+      });
+    });
+    orders.forEach((o) => {
+      const key = o.email;
+      const existing = map.get(key) ?? {
+        id: o.user_id ?? key,
+        name: [o.first_name, o.last_name].filter(Boolean).join(" ") || key.split("@")[0],
+        email: key,
+        totalOrders: 0,
+        totalSpend: 0,
+        joinedDate: o.created_at.slice(0, 10),
+      };
+      existing.totalOrders += 1;
+      existing.totalSpend += Number(o.total);
+      map.set(key, existing);
+    });
+    return Array.from(map.values()).sort((a, b) => b.totalSpend - a.totalSpend);
+  }, [profiles, orders]);
+
+  const filtered = customers.filter(
+    (c) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.email.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const customerOrders = selected
-    ? mockOrders.filter((o) => o.email === selected.email)
-    : [];
+  const customerOrders = selected ? orders.filter((o) => o.email === selected.email) : [];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold tracking-tight text-foreground">Customers</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">{mockCustomers.length} customers</p>
+        <p className="text-sm text-muted-foreground mt-0.5">{customers.length} customers</p>
       </div>
 
       <div className="relative max-w-sm">
@@ -31,11 +71,11 @@ export default function AdminCustomers() {
           placeholder="Search customers…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full h-9 bg-background border border-border rounded-md pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 transition-colors"
+          className="w-full h-9 bg-background border border-border rounded-md pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30"
         />
       </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-background border border-border rounded-lg overflow-hidden">
+      <div className="bg-background border border-border rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -47,19 +87,16 @@ export default function AdminCustomers() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((customer, i) => (
-                <motion.tr
-                  key={customer.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.04 }}
+              {filtered.map((customer) => (
+                <tr
+                  key={customer.email}
                   onClick={() => setSelected(customer)}
                   className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
-                        {customer.name.split(" ").map(n => n[0]).join("")}
+                        {customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">{customer.name}</p>
@@ -69,54 +106,46 @@ export default function AdminCustomers() {
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{customer.joinedDate}</td>
                   <td className="px-4 py-3 text-sm text-foreground/70">{customer.totalOrders}</td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-foreground/80">${customer.totalSpend}</td>
-                </motion.tr>
+                  <td className="px-4 py-3 text-right text-sm font-medium text-foreground/80">${customer.totalSpend.toFixed(2)}</td>
+                </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={4} className="px-4 py-10 text-center text-sm text-muted-foreground">No customers yet.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Customer Detail Drawer */}
       <ModalPortal><AnimatePresence>
         {selected && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelected(null)} className="fixed inset-0 bg-foreground/20 z-50" />
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-background border-l border-border z-50 overflow-y-auto"
             >
               <div className="flex items-center justify-between p-5 border-b border-border">
                 <h2 className="text-base font-bold text-foreground">{selected.name}</h2>
-                <button onClick={() => setSelected(null)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                <button onClick={() => setSelected(null)} className="p-1.5 text-muted-foreground hover:text-foreground">
                   <X size={16} />
                 </button>
               </div>
               <div className="p-5 space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground">
-                    {selected.name.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div>
-                    <p className="text-foreground font-medium">{selected.name}</p>
-                    <p className="text-sm text-muted-foreground">{selected.email}</p>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: "Orders", value: selected.totalOrders },
-                    { label: "Spent", value: `$${selected.totalSpend}` },
-                    { label: "Since", value: selected.joinedDate.slice(0, 7) },
-                  ].map((stat) => (
-                    <div key={stat.label} className="p-3 bg-muted/50 border border-border rounded-md text-center">
-                      <p className="text-lg font-bold text-foreground">{stat.value}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
-                    </div>
-                  ))}
+                  <div className="p-3 bg-muted/50 border border-border rounded-md text-center">
+                    <p className="text-lg font-bold text-foreground">{selected.totalOrders}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Orders</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 border border-border rounded-md text-center">
+                    <p className="text-lg font-bold text-foreground">${selected.totalSpend.toFixed(0)}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Spent</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 border border-border rounded-md text-center">
+                    <p className="text-lg font-bold text-foreground">{selected.joinedDate.slice(0, 7)}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Since</p>
+                  </div>
                 </div>
 
                 <div>
@@ -126,10 +155,10 @@ export default function AdminCustomers() {
                       {customerOrders.map((order) => (
                         <div key={order.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-md border border-border">
                           <div>
-                            <p className="text-sm text-foreground font-medium">{order.id}</p>
-                            <p className="text-xs text-muted-foreground">{order.date}</p>
+                            <p className="text-sm text-foreground font-medium">ORD-{order.id.slice(0, 8).toUpperCase()}</p>
+                            <p className="text-xs text-muted-foreground">{order.created_at.slice(0, 10)}</p>
                           </div>
-                          <span className="text-sm font-medium text-foreground/70">${order.total}</span>
+                          <span className="text-sm font-medium text-foreground/70">${Number(order.total).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
