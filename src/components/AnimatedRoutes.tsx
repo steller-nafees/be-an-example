@@ -12,7 +12,15 @@ import AuthPage from "@/pages/AuthPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import WishlistPage from "@/pages/WishlistPage";
 import OrderHistoryPage from "@/pages/OrderHistoryPage";
-import AccountPage from "@/pages/AccountPage";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardHome from "@/pages/dashboard/DashboardHome";
+import DashboardOrders from "@/pages/dashboard/DashboardOrders";
+import DashboardWishlist from "@/pages/dashboard/DashboardWishlist";
+import DashboardAddresses from "@/pages/dashboard/DashboardAddresses";
+import DashboardRewards from "@/pages/dashboard/DashboardRewards";
+import DashboardAffiliate from "@/pages/dashboard/DashboardAffiliate";
+import DashboardNotifications from "@/pages/dashboard/DashboardNotifications";
+import DashboardSettings from "@/pages/dashboard/DashboardSettings";
 import OrderTrackPage from "@/pages/OrderTrackPage";
 import NotFound from "@/pages/NotFound";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -48,7 +56,17 @@ export default function AnimatedRoutes() {
         <Route path="/wishlist" element={<ProtectedRoute><PageTransition><WishlistPage /></PageTransition></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><PageTransition><OrderHistoryPage /></PageTransition></ProtectedRoute>} />
         <Route path="/orders/:id" element={<ProtectedRoute><PageTransition><OrderTrackPage /></PageTransition></ProtectedRoute>} />
-        <Route path="/account" element={<ProtectedRoute><PageTransition><AccountPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/account" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+          <Route index element={<DashboardHome />} />
+          <Route path="orders" element={<DashboardOrders />} />
+          <Route path="wishlist" element={<DashboardWishlist />} />
+          <Route path="addresses" element={<DashboardAddresses />} />
+          <Route path="rewards" element={<DashboardRewards />} />
+          <Route path="affiliate" element={<DashboardAffiliate />} />
+          <Route path="notifications" element={<DashboardNotifications />} />
+          <Route path="settings" element={<DashboardSettings />} />
+        </Route>
+
 
         {/* Affiliate Apply */}
         <Route path="/affiliate/apply" element={<PageTransition><AffiliateApply /></PageTransition>} />
