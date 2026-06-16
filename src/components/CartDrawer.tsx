@@ -119,7 +119,7 @@ export default function CartDrawer() {
                   <AnimatePresence initial={false}>
                     {items.map((item, index) => (
                       <motion.div
-                        key={`${item.id}-${item.size}`}
+                        key={`${item.id}-${item.size}-${item.color ?? ""}`}
                         layout
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -146,12 +146,14 @@ export default function CartDrawer() {
                         <div className="flex-1 flex flex-col justify-between min-w-0">
                           <div>
                             <h3 className="text-sm font-semibold text-foreground leading-tight truncate">{item.name}</h3>
-                            <p className="text-[11px] text-muted-foreground mt-1">Size: {item.size}</p>
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                              Size: {item.size}{item.color ? ` · ${item.color}` : ""}
+                            </p>
                           </div>
                           <div className="flex items-end justify-between mt-2">
                             <QuantitySelector
                               quantity={item.quantity}
-                              onUpdate={(q) => updateQuantity(item.id, item.size, q)}
+                              onUpdate={(q) => updateQuantity(item.id, item.size, q, item.color)}
                             />
                             <motion.span
                               key={item.price * item.quantity}
@@ -167,7 +169,7 @@ export default function CartDrawer() {
                         {/* Remove */}
                         <motion.button
                           whileTap={{ scale: 0.8 }}
-                          onClick={() => removeItem(item.id, item.size)}
+                          onClick={() => removeItem(item.id, item.size, item.color)}
                           className="self-start mt-0.5 w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                         >
                           <X size={13} />
@@ -221,7 +223,7 @@ export default function CartDrawer() {
                           <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="text-xs text-accent-foreground mb-3"
+                            className="text-xs text-foreground font-medium mb-3"
                           >
                             Coupon applied!
                           </motion.p>

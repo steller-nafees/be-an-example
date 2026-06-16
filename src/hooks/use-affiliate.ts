@@ -15,6 +15,8 @@ export interface AffiliateRow {
   audience_size: string | null;
   commission_rate: number;
   paypal_email: string | null;
+  withdrawal_frequency?: "monthly" | "weekly";
+  payment_method?: "paypal" | "bank";
   created_at: string;
 }
 
@@ -100,5 +102,5 @@ export function computeEarnings(commissions: CommissionRow[]) {
   const pending = commissions.filter((c) => c.status === "pending").reduce((s, c) => s + Number(c.amount), 0);
   const approved = commissions.filter((c) => c.status === "approved").reduce((s, c) => s + Number(c.amount), 0);
   const paid = commissions.filter((c) => c.status === "paid").reduce((s, c) => s + Number(c.amount), 0);
-  return { pending, approved, paid, total: pending + approved + paid };
+  return { pending, approved, paid, total: approved + paid };
 }

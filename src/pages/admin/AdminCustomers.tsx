@@ -139,7 +139,7 @@ export default function AdminCustomers() {
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Orders</p>
                   </div>
                   <div className="p-3 bg-muted/50 border border-border rounded-md text-center">
-                    <p className="text-lg font-bold text-foreground">${selected.totalSpend.toFixed(0)}</p>
+                    <p className="text-lg font-bold text-foreground">${selected.totalSpend.toFixed(2)}</p>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Spent</p>
                   </div>
                   <div className="p-3 bg-muted/50 border border-border rounded-md text-center">

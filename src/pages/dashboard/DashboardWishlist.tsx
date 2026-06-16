@@ -50,7 +50,14 @@ export default function DashboardWishlist() {
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    addItem({ id: p.id, name: p.name, price: p.price, size: p.sizes[2] || p.sizes[0], image: p.image });
+                    addItem({
+                      id: p.id,
+                      name: p.name,
+                      price: p.price,
+                      size: p.sizes[2] || p.sizes[0],
+                      color: p.colors?.[0]?.name ?? "",
+                      image: p.image,
+                    });
                   }}
                   className="absolute bottom-3 left-3 right-3 h-10 bg-foreground text-background text-[10px] tracking-[0.25em] uppercase font-semibold opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 inline-flex items-center justify-center gap-2"
                 >

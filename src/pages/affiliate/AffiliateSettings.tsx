@@ -15,6 +15,8 @@ export default function AffiliateSettings() {
   const [tiktok, setTiktok] = useState("");
   const [code, setCode] = useState("");
   const [paypalEmail, setPaypalEmail] = useState("");
+  const [withdrawalFrequency, setWithdrawalFrequency] = useState<"monthly" | "weekly">("monthly");
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "bank">("paypal");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -25,6 +27,8 @@ export default function AffiliateSettings() {
     setTiktok(affiliate.tiktok || "");
     setCode(affiliate.code);
     setPaypalEmail(affiliate.paypal_email || "");
+    setWithdrawalFrequency((affiliate.withdrawal_frequency as any) || "monthly");
+    setPaymentMethod((affiliate.payment_method as any) || "paypal");
   }, [affiliate]);
 
   if (isLoading) return <div className="py-16 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
@@ -34,6 +38,8 @@ export default function AffiliateSettings() {
     setSaving(true);
     const { error } = await supabase.from("affiliates").update({
       name, email, instagram, tiktok, code: code.toUpperCase(), paypal_email: paypalEmail,
+      withdrawal_frequency: withdrawalFrequency,
+      payment_method: paymentMethod,
     }).eq("id", affiliate.id);
     setSaving(false);
     if (error) toast({ title: "Save failed", description: error.message, variant: "destructive" });
@@ -73,9 +79,26 @@ export default function AffiliateSettings() {
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-background border border-border rounded-lg p-5">
         <h2 className="text-sm font-semibold text-foreground/70 mb-4">Payment Details</h2>
-        <label className="text-xs text-muted-foreground mb-1 block">PayPal Email</label>
-        <input value={paypalEmail} onChange={(e) => setPaypalEmail(e.target.value)}
-          className="w-full max-w-md h-10 bg-muted border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:border-foreground/30" />
+          <label className="text-xs text-muted-foreground mb-1 block">PayPal Email</label>
+          <input value={paypalEmail} onChange={(e) => setPaypalEmail(e.target.value)}
+            className="w-full max-w-md h-10 bg-muted border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:border-foreground/30" />
+
+          <div className="mt-4 grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Withdrawal Frequency</label>
+              <select value={withdrawalFrequency} onChange={(e) => setWithdrawalFrequency(e.target.value as any)} className="w-full h-10 bg-muted border border-border rounded-md px-3 text-sm text-foreground">
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Payment Method</label>
+              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as any)} className="w-full h-10 bg-muted border border-border rounded-md px-3 text-sm text-foreground">
+                <option value="paypal">PayPal</option>
+                <option value="bank">Bank Transfer</option>
+              </select>
+            </div>
+          </div>
       </motion.div>
 
       <button onClick={save} disabled={saving}

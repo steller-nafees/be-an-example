@@ -8,15 +8,20 @@ export interface MetricCardProps {
   prefix?: string;
   suffix?: string;
   growth?: number;
+  decimals?: number;
   icon: LucideIcon;
   index: number;
 }
 
-function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
+function AnimatedNumber({ value, prefix = "", suffix = "", decimals = 0 }: { value: number; prefix?: string; suffix?: string; decimals?: number }) {
   const count = useMotionValue(0);
-  const display = useTransform(count, (v) =>
-    `${prefix}${Math.round(v).toLocaleString()}${suffix}`
-  );
+  const display = useTransform(count, (v) => {
+    const formatted = Number(v.toFixed(decimals)).toLocaleString(undefined, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+    return `${prefix}${formatted}${suffix}`;
+  });
 
   useEffect(() => {
     const controls = animate(count, value, { duration: 1.2, ease: "easeOut" });
@@ -26,7 +31,7 @@ function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: number; pr
   return <motion.span>{display}</motion.span>;
 }
 
-export default function MetricCard({ label, value, prefix, suffix, growth, icon: Icon, index }: MetricCardProps) {
+export default function MetricCard({ label, value, prefix, suffix, growth, decimals = 0, icon: Icon, index }: MetricCardProps) {
   const isPositive = (growth ?? 0) >= 0;
 
   return (
@@ -43,7 +48,7 @@ export default function MetricCard({ label, value, prefix, suffix, growth, icon:
         </div>
       </div>
       <div className="text-2xl font-bold tracking-tight text-foreground">
-        <AnimatedNumber value={value} prefix={prefix} suffix={suffix} />
+        <AnimatedNumber value={value} prefix={prefix} suffix={suffix} decimals={decimals} />
       </div>
       {growth !== undefined && (
         <div className="flex items-center gap-1 mt-2">
@@ -53,7 +58,7 @@ export default function MetricCard({ label, value, prefix, suffix, growth, icon:
             <TrendingDown size={12} className="text-red-500" />
           )}
           <span className={`text-xs font-medium ${isPositive ? "text-emerald-600" : "text-red-500"}`}>
-            {isPositive ? "+" : ""}{growth}%
+            {isPositive ? "+" : ""}{(growth ?? 0).toFixed(2)}%
           </span>
           <span className="text-xs text-muted-foreground">vs last month</span>
         </div>

@@ -33,9 +33,10 @@ export default function AffiliateAnalytics() {
   const { data: affiliate, isLoading } = useMyAffiliate();
   const { data: clicks = [] } = useMyClicks(affiliate?.id);
   const { data: commissions = [] } = useMyCommissions(affiliate?.id);
+  const approvedCommissions = commissions.filter((c) => c.status === "approved" || c.status === "paid");
 
-  const clicksData = useMemo(() => bucketByDay(clicks.map(c => ({ created_at: c.created_at })), () => 1), [clicks]);
-  const earningsData = useMemo(() => bucketByDay(commissions, (c) => Number(c.amount)), [commissions]);
+  const clicksData = useMemo(() => bucketByDay(clicks.map((c) => ({ created_at: c.created_at })), () => 1), [clicks]);
+  const earningsData = useMemo(() => bucketByDay(approvedCommissions, (c) => Number(c.amount)), [approvedCommissions]);
 
   if (isLoading) return <div className="py-16 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
   if (!affiliate) return <p className="text-sm text-muted-foreground">No affiliate profile.</p>;

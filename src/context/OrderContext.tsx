@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import type { CartItem } from "./CartContext";
 
 export interface Order {
-  id: string;
+  id: string; // UUID
+  formattedId: string; // e.g., "BAEO-0001"
   customerInfo: {
     firstName: string;
     lastName: string;
@@ -45,10 +46,14 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("bae-orders", JSON.stringify(orders));
   }, [orders]);
 
-  const addOrder = (orderData: Omit<Order, "id" | "date" | "status">): Order => {
+  const addOrder = (orderData: Omit<Order, "id" | "formattedId" | "date" | "status">): Order => {
+    const orderNumber = orders.length + 1;
+    const formattedId = `BAEO-${orderNumber.toString().padStart(4, "0")}`;
+    
     const newOrder: Order = {
       ...orderData,
       id: `ORD-${Date.now()}`,
+      formattedId,
       date: new Date().toISOString(),
       status: "pending",
     };

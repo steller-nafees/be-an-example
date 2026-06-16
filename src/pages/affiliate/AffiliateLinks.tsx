@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check, Loader2, MousePointerClick } from "lucide-react";
 import { useMyAffiliate, useMyClicks } from "@/hooks/use-affiliate";
+import { supabase } from "@/lib/supabase";
 
 export default function AffiliateLinks() {
   const { data: affiliate, isLoading } = useMyAffiliate();
@@ -14,6 +15,23 @@ export default function AffiliateLinks() {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const mainLink = `${baseUrl}/?ref=${affiliate.code}`;
   const shopLink = `${baseUrl}/shop?ref=${affiliate.code}`;
+
+  const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+  const [generated, setGenerated] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoadingProducts(true);
+      const { data } = await supabase.from("products").select("id,name").order("created_at", { ascending: false }).limit(50);
+      if (!mounted) return;
+      setProducts((data as any) ?? []);
+      setLoadingProducts(false);
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -68,6 +86,40 @@ export default function AffiliateLinks() {
         <h2 className="text-sm font-semibold text-foreground/70">Quick Links</h2>
         {linkRow("home", "Homepage", mainLink)}
         {linkRow("shop", "Shop Page", shopLink)}
+        <div className="mt-4">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Product Link</h3>
+          <div className="flex gap-2 items-center">
+            <select
+              value={selectedProduct ?? ""}
+              onChange={(e) => setSelectedProduct(e.target.value || null)}
+              className="flex-1 h-10 px-3 border border-border rounded-md bg-background text-sm"
+            >
+              <option value="">Select a product...</option>
+              {loadingProducts ? <option>Loading…</option> : products.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => {
+                if (!selectedProduct) return;
+                const url = `${baseUrl}/product/${selectedProduct}?ref=${affiliate.code}`;
+                setGenerated(url);
+                navigator.clipboard.writeText(url);
+                setCopied(selectedProduct);
+                setTimeout(() => setCopied(null), 2000);
+              }}
+              disabled={!selectedProduct}
+              className="px-3 py-2 bg-foreground text-background rounded-md text-sm"
+            >
+              Generate & Copy
+            </button>
+          </div>
+          {generated && (
+            <div className="mt-3">
+              {linkRow(`prod-${selectedProduct}`, products.find((p) => p.id === selectedProduct)?.name || "Product link", generated)}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

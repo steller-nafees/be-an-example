@@ -12,7 +12,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-background border border-border rounded-md px-3 py-2 shadow-lg">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold text-foreground">${Number(payload[0].value).toLocaleString()}</p>
+        <p className="text-sm font-semibold text-foreground">${Number(payload[0].value).toFixed(2)}</p>
       </div>
     );
   }
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Revenue" value={Math.round(metrics.totalRevenue)} prefix="$" growth={metrics.revenueGrowth} icon={DollarSign} index={0} />
+        <MetricCard label="Revenue" value={metrics.totalRevenue} prefix="$" decimals={2} growth={metrics.revenueGrowth} icon={DollarSign} index={0} />
         <MetricCard label="Orders" value={metrics.totalOrders} growth={metrics.orderGrowth} icon={ShoppingCart} index={1} />
         <MetricCard label="Customers" value={metrics.totalCustomers} growth={0} icon={Users} index={2} />
         <MetricCard label="Products" value={products.length} growth={0} icon={TrendingUp} index={3} />
@@ -97,9 +97,9 @@ export default function AdminDashboard() {
           {topProducts.map((product) => (
             <div key={product.id} className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border border-border">
               <img src={product.image} alt={product.name} className="w-10 h-10 rounded object-cover" />
-              <div className="min-w-0">
+                <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground/80 truncate">{product.name}</p>
-                <p className="text-xs text-muted-foreground">${product.price} · {product.stock} in stock</p>
+                <p className="text-xs text-muted-foreground">${Number(product.price).toFixed(2)} · {product.stock} in stock</p>
               </div>
             </div>
           ))}

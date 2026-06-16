@@ -36,14 +36,14 @@ export default function DashboardRewards() {
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-background/60 mb-3">Current tier</p>
             <h2 className="text-5xl md:text-7xl font-black tracking-tight">{tier}</h2>
-            <p className="mt-3 text-background/70 text-sm">{points.toLocaleString()} points · ${totalSpend.toFixed(0)} lifetime</p>
+            <p className="mt-3 text-background/70 text-sm">{points.toLocaleString()} points · ${totalSpend.toFixed(2)} lifetime</p>
           </div>
           <div>
             {next ? (
               <>
                 <div className="flex items-baseline justify-between mb-2">
                   <span className="text-[10px] tracking-[0.3em] uppercase text-background/60">Progress to {next}</span>
-                  <span className="text-xs text-background/80">${toNext.toFixed(0)} away</span>
+                  <span className="text-xs text-background/80">${toNext.toFixed(2)} away</span>
                 </div>
                 <div className="h-1.5 bg-background/15 rounded-full overflow-hidden">
                   <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 1.2, ease: "easeOut" }} className="h-full bg-accent" />

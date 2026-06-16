@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 
 type Order = {
   id: string;
+  formatted_id?: string;
   status: string;
   total: number;
   created_at: string;
@@ -96,7 +97,7 @@ export default function OrderTrackPage() {
         </Link>
 
         <div className="mb-2 flex items-baseline justify-between">
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight">Order #{order.id.slice(0, 8).toUpperCase()}</h1>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight">Order #{order.formatted_id ?? order.id.slice(0, 8).toUpperCase()}</h1>
           <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleString()}</p>
         </div>
         <p className="text-sm text-muted-foreground mb-10">Updates live as your order moves.</p>

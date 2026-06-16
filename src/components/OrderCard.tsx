@@ -19,7 +19,7 @@ export default function OrderCard({ order, onViewInvoice }: OrderCardProps) {
     <div className="bg-white border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="font-semibold text-foreground mb-1">{order.id}</h3>
+          <h3 className="font-semibold text-foreground mb-1">{order.formattedId}</h3>
           <p className="text-sm text-muted-foreground">
             {format(new Date(order.date), "MMM dd, yyyy 'at' hh:mm a")}
           </p>

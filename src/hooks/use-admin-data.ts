@@ -54,6 +54,9 @@ export interface AdminAffiliate {
   status: "pending" | "approved" | "rejected";
   audience_size: string | null;
   commission_rate: number;
+  paypal_email?: string | null;
+  withdrawal_frequency?: "monthly" | "weekly";
+  payment_method?: "paypal" | "bank";
   created_at: string;
 }
 
@@ -89,8 +92,8 @@ export function computeMetrics(orders: AdminOrderLite[]) {
     totalRevenue,
     totalOrders,
     totalCustomers: customers,
-    revenueGrowth: Math.round(growth(rev30, revPrev) * 10) / 10,
-    orderGrowth: Math.round(growth(last30.length, prev30.length) * 10) / 10,
+    revenueGrowth: Math.round(growth(rev30, revPrev) * 100) / 100,
+    orderGrowth: Math.round(growth(last30.length, prev30.length) * 100) / 100,
     customerGrowth: 0,
   };
 }

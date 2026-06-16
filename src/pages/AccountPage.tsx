@@ -133,9 +133,14 @@ export default function AccountPage() {
                   <label className="text-xs uppercase tracking-wide text-muted-foreground mb-2 block">Email</label>
                   <input value={profile.email ?? ""} disabled className="w-full h-11 px-3 border border-border bg-muted/40 text-sm text-muted-foreground" />
                 </div>
-                <button onClick={saveProfile} disabled={saving} className="h-11 px-6 bg-foreground text-background text-sm font-semibold uppercase tracking-widest flex items-center gap-2 disabled:opacity-60">
-                  {saving && <Loader2 size={14} className="animate-spin" />} Save changes
-                </button>
+                <div className="flex flex-col gap-3">
+                  <button onClick={saveProfile} disabled={saving} className="h-11 px-6 bg-foreground text-background text-sm font-semibold uppercase tracking-widest flex items-center gap-2 disabled:opacity-60">
+                    {saving && <Loader2 size={14} className="animate-spin" />} Save changes
+                  </button>
+                  <Link to="/reset-password" className="inline-flex items-center justify-center h-11 px-6 border border-border rounded-md text-sm font-medium text-foreground hover:bg-muted/60 transition">
+                    Reset password
+                  </Link>
+                </div>
               </div>
             )}
           </section>

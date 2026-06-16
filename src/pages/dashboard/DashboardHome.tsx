@@ -89,7 +89,7 @@ export default function DashboardHome() {
               <span className="text-[10px] tracking-[0.3em] uppercase text-background/70">{tier} Status</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-1">
-              {next ? `$${toNext.toFixed(0)} to ${next}` : "You've reached the top."}
+              {next ? `$${toNext.toFixed(2)} to ${next}` : "You've reached the top."}
             </h2>
             <p className="text-background/60 text-sm mb-6">
               {next ? "Unlock exclusive drops, early access, and elevated rewards." : "Enjoy your Elite benefits — for life."}

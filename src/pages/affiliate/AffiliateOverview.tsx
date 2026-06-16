@@ -37,7 +37,8 @@ export default function AffiliateOverview() {
   const { data: commissions = [] } = useMyCommissions(affiliate?.id);
   const { data: clicks = [] } = useMyClicks(affiliate?.id);
   const earnings = computeEarnings(commissions);
-  const chartData = useMemo(() => earningsByDay(commissions), [commissions]);
+  const approvedCommissions = commissions.filter((c) => c.status === "approved" || c.status === "paid");
+  const chartData = useMemo(() => earningsByDay(approvedCommissions), [approvedCommissions]);
 
   if (isLoading) {
     return <div className="py-16 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
@@ -58,13 +59,13 @@ export default function AffiliateOverview() {
       <div>
         <h1 className="text-xl font-bold tracking-tight text-foreground">Welcome back, {affiliate.name.split(" ")[0]}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Status: <span className="capitalize">{affiliate.status}</span> · Code <span className="font-mono">{affiliate.code}</span>
+          Status: <span className="capitalize">{affiliate.status}</span> · Code <span className="font-mono">{affiliate.code}</span> · Rate <span className="font-mono">{affiliate.commission_rate}%</span>
         </p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Total Earnings" value={Math.round(earnings.total)} prefix="$" growth={0} icon={DollarSign} index={0} />
-        <MetricCard label="Pending" value={Math.round(earnings.pending)} prefix="$" growth={0} icon={TrendingUp} index={1} />
+        <MetricCard label="Total Earnings" value={earnings.total} prefix="$" decimals={2} growth={0} icon={DollarSign} index={0} />
+        <MetricCard label="Pending" value={earnings.pending} prefix="$" decimals={2} growth={0} icon={TrendingUp} index={1} />
         <MetricCard label="Clicks" value={clicks.length} growth={0} icon={MousePointerClick} index={2} />
         <MetricCard label="Conversions" value={commissions.length} growth={0} icon={ShoppingBag} index={3} />
       </div>

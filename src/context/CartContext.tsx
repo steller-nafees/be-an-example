@@ -5,6 +5,7 @@ export interface CartItem {
   name: string;
   price: number;
   size: string;
+  color?: string;
   image: string;
   quantity: number;
 }
@@ -12,8 +13,8 @@ export interface CartItem {
 interface CartContextType {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "quantity">) => void;
-  removeItem: (id: string, size: string) => void;
-  updateQuantity: (id: string, size: string, quantity: number) => void;
+  removeItem: (id: string, size: string, color?: string) => void;
+  updateQuantity: (id: string, size: string, quantity: number, color?: string) => void;
   clearCart: () => void;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
@@ -37,26 +38,41 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("bae-cart", JSON.stringify(items));
   }, [items]);
 
+  const normalizeColor = (color?: string) => color ?? "";
+  const isSameItem = (i: CartItem, id: string, size: string, color?: string) =>
+    i.id === id && i.size === size && normalizeColor(i.color) === normalizeColor(color);
+
   const addItem = (item: Omit<CartItem, "quantity">) => {
+    const normalizedItem = { ...item, color: normalizeColor(item.color) };
+
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id && i.size === item.size);
+      const existing = prev.find((i) => isSameItem(i, normalizedItem.id, normalizedItem.size, normalizedItem.color));
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id && i.size === item.size ? { ...i, quantity: i.quantity + 1 } : i
+          isSameItem(i, normalizedItem.id, normalizedItem.size, normalizedItem.color)
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
         );
       }
-      return [...prev, { ...item, quantity: 1 }];
+      return [...prev, { ...normalizedItem, quantity: 1 }];
     });
     setIsOpen(true);
   };
 
-  const removeItem = (id: string, size: string) => {
-    setItems((prev) => prev.filter((i) => !(i.id === id && i.size === size)));
+  const removeItem = (id: string, size: string, color?: string) => {
+    setItems((prev) => prev.filter((i) => !isSameItem(i, id, size, color)));
   };
 
-  const updateQuantity = (id: string, size: string, quantity: number) => {
-    if (quantity <= 0) { removeItem(id, size); return; }
-    setItems((prev) => prev.map((i) => (i.id === id && i.size === size ? { ...i, quantity } : i)));
+  const updateQuantity = (id: string, size: string, quantity: number, color?: string) => {
+    if (quantity <= 0) {
+      removeItem(id, size, color);
+      return;
+    }
+    setItems((prev) =>
+      prev.map((i) =>
+        isSameItem(i, id, size, color) ? { ...i, quantity } : i
+      )
+    );
   };
 
   const clearCart = () => setItems([]);

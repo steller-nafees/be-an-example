@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Check, CreditCard, Truck, MapPin, ClipboardList, Loader2, ShieldCheck, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
-import { useOrder } from "@/context/OrderContext";
 import Navbar from "@/components/Navbar";
 import Invoice from "@/components/Invoice";
 import InvoiceDownloadButton from "@/components/InvoiceDownload";
@@ -64,7 +63,6 @@ function FloatingInput({
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
-  const { addOrder } = useOrder();
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -98,8 +96,48 @@ export default function CheckoutPage() {
     const grandTotal = totalPrice + deliveryCost + tax;
     const affiliateCode = getReferralCode();
 
-    // local order (keeps UI flow working)
-    const newOrder = addOrder({
+    if (!user) {
+      toast({ title: "Sign in required", description: "Please sign in to complete the checkout.", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+
+    const { data: dbOrder, error: orderErr } = await supabase.rpc("create_order_with_items", {
+      p_user_id: user.id,
+      p_email: shipping.email || user.email,
+      p_first_name: shipping.firstName,
+      p_last_name: shipping.lastName,
+      p_phone: shipping.phone,
+      p_address: shipping.address,
+      p_city: shipping.city,
+      p_state: shipping.state,
+      p_zip: shipping.zip,
+      p_shipping_method: deliveryMethod,
+      p_delivery_fee: deliveryCost,
+      p_subtotal: totalPrice,
+      p_tax: tax,
+      p_total: grandTotal,
+      p_affiliate_code: affiliateCode,
+      p_items: items.map((it) => ({
+        product_id: String(it.id),
+        name: it.name,
+        image: it.image,
+        size: it.size ?? "",
+        color: it.color ?? "",
+        price: it.price,
+        quantity: it.quantity,
+      })),
+    });
+
+    if (orderErr || !dbOrder) {
+      toast({ title: "Order failed", description: orderErr?.message ?? "Unable to create order.", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+
+    const createdLocalOrder: Order = {
+      id: dbOrder.id,
+      formattedId: dbOrder.formatted_id ?? `BAEO-0000`,
       customerInfo: shipping,
       items,
       shippingMethod: deliveryMethod as "standard" | "express" | "overnight",
@@ -107,53 +145,11 @@ export default function CheckoutPage() {
       subtotal: totalPrice,
       tax,
       total: grandTotal,
-    });
+      date: new Date().toISOString(),
+      status: "pending",
+    };
 
-    // persist to Supabase
-    if (user) {
-      const { data: dbOrder, error: orderErr } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
-          email: shipping.email || user.email,
-          first_name: shipping.firstName,
-          last_name: shipping.lastName,
-          phone: shipping.phone,
-          address: shipping.address,
-          city: shipping.city,
-          state: shipping.state,
-          zip: shipping.zip,
-          shipping_method: deliveryMethod,
-          delivery_fee: deliveryCost,
-          subtotal: totalPrice,
-          tax,
-          total: grandTotal,
-          status: "pending",
-          affiliate_code: affiliateCode,
-        })
-        .select()
-        .single();
-      if (orderErr) {
-        toast({ title: "Order save failed", description: orderErr.message, variant: "destructive" });
-      } else if (dbOrder) {
-        await supabase.from("order_items").insert(
-          items.map((it: any) => ({
-            order_id: dbOrder.id,
-            product_id: String(it.id),
-            name: it.name,
-            image: it.image,
-            size: it.size ?? null,
-            color: it.color ?? null,
-            price: it.price,
-            quantity: it.quantity,
-          })),
-        );
-      }
-    } else {
-      toast({ title: "Tip", description: "Sign in to track this order in your account." });
-    }
-
-    setCreatedOrder(newOrder);
+    setCreatedOrder(createdLocalOrder);
     setLoading(false);
     setOrderPlaced(true);
     clearCart();
@@ -216,7 +212,7 @@ export default function CheckoutPage() {
                 transition={{ delay: 0.8 }}
                 className="text-xs text-muted-foreground mb-10"
               >
-                Order ID: <span className="font-semibold">{createdOrder.id}</span>
+                Order ID: <span className="font-semibold">{createdOrder.formattedId}</span>
               </motion.p>
             </motion.div>
 

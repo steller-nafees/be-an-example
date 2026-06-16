@@ -34,6 +34,7 @@ import AdminAffiliates from "@/pages/admin/AdminAffiliates";
 import AdminFraud from "@/pages/admin/AdminFraud";
 import AffiliateOverview from "@/pages/affiliate/AffiliateOverview";
 import AffiliateLinks from "@/pages/affiliate/AffiliateLinks";
+import AffiliateOrders from "@/pages/affiliate/AffiliateOrders";
 import AffiliateAnalytics from "@/pages/affiliate/AffiliateAnalytics";
 import AffiliateEarnings from "@/pages/affiliate/AffiliateEarnings";
 import AffiliatePayouts from "@/pages/affiliate/AffiliatePayouts";
@@ -70,11 +71,13 @@ export default function AnimatedRoutes() {
 
         {/* Affiliate Apply */}
         <Route path="/affiliate/apply" element={<PageTransition><AffiliateApply /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><AuthPage /></PageTransition>} />
 
         {/* Affiliate Dashboard */}
-        <Route path="/affiliate" element={<AffiliateLayout />}>
+        <Route path="/affiliate" element={<ProtectedRoute requireRole="affiliate"><AffiliateLayout /></ProtectedRoute>}>
           <Route index element={<AffiliateOverview />} />
           <Route path="links" element={<AffiliateLinks />} />
+          <Route path="orders" element={<AffiliateOrders />} />
           <Route path="analytics" element={<AffiliateAnalytics />} />
           <Route path="earnings" element={<AffiliateEarnings />} />
           <Route path="payouts" element={<AffiliatePayouts />} />

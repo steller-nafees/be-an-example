@@ -51,7 +51,7 @@ export default function Invoice({ order }: InvoiceProps) {
           <div className="space-y-2 text-sm">
             <div>
               <p className="text-gray-500">Order ID</p>
-              <p className="text-gray-900 font-medium">{order.id}</p>
+              <p className="text-gray-900 font-medium">{order.formattedId}</p>
             </div>
             <div>
               <p className="text-gray-500">Status</p>

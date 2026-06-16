@@ -63,6 +63,7 @@ export default function ProductCard({ product, index = 0 }: Props) {
               name: product.name,
               price: product.price,
               size: product.sizes[2] || product.sizes[0],
+              color: product.colors?.[0]?.name ?? "",
               image: product.image,
             });
           }}

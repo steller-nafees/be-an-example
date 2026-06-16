@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Link2,
+  ShoppingBag,
   BarChart3,
   DollarSign,
   Wallet,
@@ -18,6 +19,7 @@ import {
 const navItems = [
   { label: "Overview", path: "/affiliate", icon: LayoutDashboard },
   { label: "Links", path: "/affiliate/links", icon: Link2 },
+  { label: "Orders", path: "/affiliate/orders", icon: ShoppingBag },
   { label: "Analytics", path: "/affiliate/analytics", icon: BarChart3 },
   { label: "Earnings", path: "/affiliate/earnings", icon: DollarSign },
   { label: "Payouts", path: "/affiliate/payouts", icon: Wallet },

@@ -165,12 +165,14 @@ export default function ProductPage() {
   const handleAdd = () => {
     const size =
       selectedSize || sizeOptions[2]?.size || sizeOptions[0]?.size || "M";
+    const color = currentColor?.name || "";
     for (let i = 0; i < quantity; i++) {
       addItem({
         id: product.id,
         name: product.name,
         price: product.price,
         size,
+        color,
         image: activeImages[0] || product.image,
       });
     }
