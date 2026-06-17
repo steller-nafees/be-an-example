@@ -40,6 +40,14 @@ import AffiliateEarnings from "@/pages/affiliate/AffiliateEarnings";
 import AffiliatePayouts from "@/pages/affiliate/AffiliatePayouts";
 import AffiliateSettings from "@/pages/affiliate/AffiliateSettings";
 import AffiliateApply from "@/pages/affiliate/AffiliateApply";
+import AboutPage from "@/pages/AboutPage";
+import ContactPage from "@/pages/ContactPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import TermsPage from "@/pages/TermsPage";
+import RefundPolicy from "@/pages/RefundPolicy";
+import ShippingPolicy from "@/pages/ShippingPolicy";
+import AffiliateAgreement from "@/pages/AffiliateAgreement";
+import CookiePolicy from "@/pages/CookiePolicy";
 
 export default function AnimatedRoutes() {
   const location = useLocation();
@@ -72,6 +80,16 @@ export default function AnimatedRoutes() {
         {/* Affiliate Apply */}
         <Route path="/affiliate/apply" element={<PageTransition><AffiliateApply /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><AuthPage /></PageTransition>} />
+
+        {/* Public Pages */}
+        <Route path="/about" element={<PageTransition><AboutPage /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/shipping-policy" element={<ShippingPolicy />} />
+        <Route path="/affiliate-agreement" element={<AffiliateAgreement />} />
+        <Route path="/cookie-policy" element={<CookiePolicy />} />
 
         {/* Affiliate Dashboard */}
         <Route path="/affiliate" element={<ProtectedRoute requireRole="affiliate"><AffiliateLayout /></ProtectedRoute>}>

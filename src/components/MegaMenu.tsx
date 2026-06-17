@@ -1,36 +1,8 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import megaMenuFeatured from "@/assets/mega-menu-featured.jpg";
-
-const categories = [
-  {
-    title: "Tops",
-    items: [
-      { label: "Hoodies", href: "/shop?category=hoodies" },
-      { label: "T-Shirts", href: "/shop?category=tshirts" },
-      { label: "Sweatshirts", href: "/shop?category=sweatshirts" },
-      { label: "Long Sleeves", href: "/shop?category=longsleeves" },
-    ],
-  },
-  {
-    title: "Collections",
-    items: [
-      { label: "New Arrivals", href: "/shop?collection=new", badge: "New" },
-      { label: "Best Sellers", href: "/shop?collection=bestsellers" },
-      { label: "Essentials", href: "/shop?collection=essentials" },
-      { label: "Limited Edition", href: "/shop?collection=limited", badge: "New" },
-    ],
-  },
-  {
-    title: "More",
-    items: [
-      { label: "Accessories", href: "/shop?category=accessories" },
-      { label: "Gift Cards", href: "/shop?type=giftcards" },
-      { label: "Sale", href: "/shop?sale=true" },
-      { label: "All Products", href: "/shop" },
-    ],
-  },
-];
+import { useCollections } from "@/hooks/use-collections";
+import { useProducts } from "@/hooks/use-products";
 
 const containerVariants = {
   hidden: { opacity: 0, y: -8 },
@@ -56,6 +28,57 @@ interface MegaMenuProps {
 }
 
 export default function MegaMenu({ onClose }: MegaMenuProps) {
+  const { data: collections = [] } = useCollections();
+  const { data: products = [] } = useProducts();
+
+  // Extract unique categories from products
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(products.map((p) => p.category))).filter(Boolean);
+    return uniqueCategories.slice(0, 4); // Limit to 4 categories
+  }, [products]);
+
+  // Get featured collection (newest) for "New Drop"
+  const featuredCollection = useMemo(() => {
+    return collections.length > 0 ? collections[0] : null;
+  }, [collections]);
+
+  // Get featured product from newest collection for image
+  const featuredProduct = useMemo(() => {
+    if (!featuredCollection) return null;
+    return products.find((p) => p.collection_id === featuredCollection.id);
+  }, [featuredCollection, products]);
+
+  const menuData = [
+    {
+      title: "Categories",
+      items: categories.map((cat) => ({
+        label: cat.charAt(0).toUpperCase() + cat.slice(1),
+        href: `/shop?category=${cat.toLowerCase()}`,
+      })),
+    },
+    {
+      title: "Collections",
+      items: [
+        ...collections.slice(0, 3).map((col) => ({
+          label: col.name,
+          href: `/shop?collection=${col.slug}`,
+        })),
+        {
+          label: "Best Sellers",
+          href: "/shop?sort=bestsellers",
+        },
+      ],
+    },
+    {
+      title: "More",
+      items: [
+        { label: "All Products", href: "/shop" },
+        { label: "New Arrivals", href: "/shop?sort=newest" },
+        { label: "Top Rated", href: "/shop?sort=rating" },
+      ],
+    },
+  ];
+
   return (
     <>
       {/* Backdrop */}
@@ -64,7 +87,7 @@ export default function MegaMenu({ onClose }: MegaMenuProps) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 top-16 md:top-20 z-40 bg-foreground/10 backdrop-blur-[2px]"
+        className="absolute inset-0 left-0 right-0 w-full z-40 bg-foreground/10 backdrop-blur-[2px]"
         onClick={onClose}
       />
 
@@ -74,18 +97,18 @@ export default function MegaMenu({ onClose }: MegaMenuProps) {
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="fixed left-0 right-0 top-16 md:top-20 z-50 bg-background border-b border-border grain"
+        className="absolute left-0 right-0 w-full z-50 bg-background border-b border-border grain"
       >
         <div className="container mx-auto px-6 py-10 md:py-14">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-10 md:gap-8">
-            {/* Category Columns */}
-            {categories.map((cat) => (
-              <motion.div key={cat.title} variants={columnVariants}>
+            {/* Menu Columns */}
+            {menuData.map((section) => (
+              <motion.div key={section.title} variants={columnVariants}>
                 <h3 className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground mb-5">
-                  {cat.title}
+                  {section.title}
                 </h3>
                 <ul className="space-y-3">
-                  {cat.items.map((item) => (
+                  {section.items.map((item) => (
                     <li key={item.label}>
                       <Link
                         to={item.href}
@@ -96,11 +119,6 @@ export default function MegaMenu({ onClose }: MegaMenuProps) {
                           {item.label}
                           <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-foreground transition-all duration-300 group-hover:w-full" />
                         </span>
-                        {"badge" in item && item.badge && (
-                          <span className="text-[9px] font-bold tracking-wider uppercase bg-foreground text-background px-1.5 py-0.5">
-                            {item.badge}
-                          </span>
-                        )}
                       </Link>
                     </li>
                   ))}
@@ -110,33 +128,39 @@ export default function MegaMenu({ onClose }: MegaMenuProps) {
 
             {/* Featured Collection */}
             <motion.div variants={columnVariants}>
-              <Link
-                to="/shop?collection=new"
-                onClick={onClose}
-                className="group block relative overflow-hidden aspect-[4/5]"
-              >
-                <img
-                  src={megaMenuFeatured}
-                  alt="New Drop Collection"
-                  loading="lazy"
-                  width={640}
-                  height={800}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <motion.p
-                    className="text-[10px] font-bold tracking-[0.25em] uppercase text-background/70 mb-1"
-                    initial={{ opacity: 0.8 }}
-                    whileHover={{ opacity: 1 }}
-                  >
-                    New Drop
-                  </motion.p>
-                  <p className="text-sm font-semibold text-background tracking-wide group-hover:underline underline-offset-4">
-                    Shop Now →
-                  </p>
+              {featuredProduct?.image ? (
+                <Link
+                  to={`/products/${featuredProduct.id}`}
+                  onClick={onClose}
+                  className="group block relative overflow-hidden aspect-[4/5]"
+                >
+                  <img
+                    src={featuredProduct.image}
+                    alt={featuredCollection?.name || "Featured Product"}
+                    loading="lazy"
+                    width={640}
+                    height={800}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5">
+                    <motion.p
+                      className="text-[10px] font-bold tracking-[0.25em] uppercase text-background/70 mb-1"
+                      initial={{ opacity: 0.8 }}
+                      whileHover={{ opacity: 1 }}
+                    >
+                      {featuredCollection?.name || "New Drop"}
+                    </motion.p>
+                    <p className="text-sm font-semibold text-background tracking-wide group-hover:underline underline-offset-4">
+                      Shop Now →
+                    </p>
+                  </div>
+                </Link>
+              ) : (
+                <div className="aspect-[4/5] bg-muted flex items-center justify-center rounded">
+                  <p className="text-xs text-muted-foreground">Featured collection</p>
                 </div>
-              </Link>
+              )}
             </motion.div>
 
             {/* Editorial Message */}

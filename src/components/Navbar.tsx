@@ -11,8 +11,8 @@ import MegaMenu from "./MegaMenu";
 const links = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/shop", hasMega: true },
-  { label: "About", href: "/#about" },
-  { label: "Contact", href: "/#contact" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 const mobileCategories = [
@@ -186,7 +186,11 @@ export default function Navbar() {
       {/* Desktop Mega Menu */}
       <AnimatePresence>
         {megaOpen && (
-          <div onMouseEnter={handleMegaEnter} onMouseLeave={handleMegaLeave}>
+          <div 
+            onMouseEnter={handleMegaEnter} 
+            onMouseLeave={handleMegaLeave}
+            className="fixed left-0 right-0 top-16 md:top-20 z-40 pointer-events-auto"
+          >
             <MegaMenu onClose={() => setMegaOpen(false)} />
           </div>
         )}

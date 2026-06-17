@@ -9,6 +9,7 @@ import { OrderProvider } from "@/context/OrderContext";
 import { LogoProvider } from "@/context/LogoContext";
 import { AuthProvider } from "@/context/AuthContext";
 import AnimatedRoutes from "@/components/AnimatedRoutes";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
                 <OrderProvider>
                   <Toaster />
                   <Sonner />
+                  <ScrollToTop />
                   <AnimatedRoutes />
                 </OrderProvider>
               </CartProvider>
