@@ -3,9 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SlidersHorizontal, X, Search } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import ProductCard from "@/components/ProductCard";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import CartDrawer from "@/components/CartDrawer";
 
 const categories = ["all", "hoodies", "tshirts", "accessories"] as const;
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -43,7 +40,6 @@ export default function ShopPage() {
 
   return (
     <>
-      <Navbar />
       <main className="pt-24 pb-24 bg-background min-h-screen">
         <div className="container mx-auto px-6">
           <motion.div
@@ -198,8 +194,6 @@ export default function ShopPage() {
           </AnimatePresence>
         </div>
       </main>
-      <Footer />
-      <CartDrawer />
     </>
   );
 }

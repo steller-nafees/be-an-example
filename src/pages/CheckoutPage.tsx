@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Check, CreditCard, Truck, MapPin, ClipboardList, Loader2, ShieldCheck, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
-import Navbar from "@/components/Navbar";
 import Invoice from "@/components/Invoice";
 import InvoiceDownloadButton from "@/components/InvoiceDownload";
 import type { Order } from "@/context/OrderContext";
@@ -248,7 +247,6 @@ export default function CheckoutPage() {
   if (orderPlaced && createdOrder) {
     return (
       <>
-        <Navbar />
         <main className="pt-24 pb-12 bg-background min-h-screen">
           <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
             <motion.div
@@ -313,7 +311,6 @@ export default function CheckoutPage() {
   // ── Main checkout ──────────────────────────────────────────────────────────
   return (
     <>
-      <Navbar />
       {/* pb-36 leaves room for the fixed mobile summary bar */}
       <main className="pt-24 pb-36 lg:pb-24 bg-background min-h-screen overflow-x-hidden">
         {/* ↑ overflow-x-hidden on main prevents any child from causing horizontal scroll */}

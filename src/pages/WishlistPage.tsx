@@ -4,9 +4,6 @@ import { Link } from "react-router-dom";
 import { useWishlist } from "@/context/WishlistContext";
 import { useProducts } from "@/hooks/use-products";
 import ProductCard from "@/components/ProductCard";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import CartDrawer from "@/components/CartDrawer";
 
 export default function WishlistPage() {
   const { items } = useWishlist();
@@ -15,7 +12,6 @@ export default function WishlistPage() {
 
   return (
     <>
-      <Navbar />
       <main className="pt-24 pb-24 bg-background min-h-screen">
         <div className="container mx-auto px-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
@@ -47,8 +43,6 @@ export default function WishlistPage() {
           )}
         </div>
       </main>
-      <Footer />
-      <CartDrawer />
     </>
   );
 }

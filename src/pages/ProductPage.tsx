@@ -19,9 +19,6 @@ import { useProduct, useProducts } from "@/hooks/use-products";
 import { useProductColors, useProductVariants } from "@/hooks/use-variants";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import CartDrawer from "@/components/CartDrawer";
 import ProductCard from "@/components/ProductCard";
 import ModalPortal from "@/components/ModalPortal";
 import {
@@ -126,21 +123,18 @@ export default function ProductPage() {
   /* ---------------- loading / not found ---------------- */
   if (isLoading) {
     return (
-      <>
-        <Navbar />
-        <main className="pt-24 pb-24 bg-background min-h-screen">
-          <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-16">
-            <Skeleton className="aspect-[3/4] w-full" />
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-10 w-3/4" />
-              <Skeleton className="h-6 w-20" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
+      <main className="pt-24 pb-24 bg-background min-h-screen">
+        <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-16">
+          <Skeleton className="aspect-[3/4] w-full" />
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-10 w-3/4" />
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-12 w-full" />
           </div>
-        </main>
-      </>
+        </div>
+      </main>
     );
   }
   if (!product) {
@@ -194,8 +188,6 @@ export default function ProductPage() {
   /* ---------------- render ---------------- */
   return (
     <>
-      <Navbar />
-
       {/* subtle grain overlay */}
       <div
         aria-hidden
@@ -792,9 +784,6 @@ export default function ProductPage() {
           )}
         </AnimatePresence>
       </ModalPortal>
-
-      <Footer />
-      <CartDrawer />
     </>
   );
 }

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import Navbar from "@/components/Navbar";
 import OrderCard from "@/components/OrderCard";
 import Invoice from "@/components/Invoice";
 import InvoiceDownloadButton from "@/components/InvoiceDownload";
@@ -102,8 +101,6 @@ export default function OrderHistoryPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main className="max-w-4xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="mb-8">

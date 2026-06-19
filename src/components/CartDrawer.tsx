@@ -37,14 +37,33 @@ function QuantitySelector({ quantity, onUpdate }: { quantity: number; onUpdate: 
   );
 }
 
+const VALID_COUPONS = new Set(["BEANEXAMPLE10", "WELCOME5", "SAVE20"]);
+
 export default function CartDrawer() {
   const { items, isOpen, setIsOpen, updateQuantity, removeItem, totalPrice } = useCart();
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState("");
   const [showCoupon, setShowCoupon] = useState(false);
 
   const handleApplyCoupon = () => {
-    if (coupon.trim()) setCouponApplied(true);
+    const code = coupon.trim().toUpperCase();
+
+    if (!code) {
+      setCouponApplied(false);
+      setCouponError("Please enter a coupon code.");
+      return;
+    }
+
+    if (!VALID_COUPONS.has(code)) {
+      setCouponApplied(false);
+      setCouponError("Coupon code is not valid.");
+      return;
+    }
+
+    setCouponApplied(true);
+    setCouponError("");
+    setCoupon(code);
   };
 
   return (
@@ -207,7 +226,11 @@ export default function CartDrawer() {
                           <input
                             type="text"
                             value={coupon}
-                            onChange={(e) => setCoupon(e.target.value)}
+                            onChange={(e) => {
+                              setCoupon(e.target.value);
+                              setCouponError("");
+                              setCouponApplied(false);
+                            }}
                             placeholder="Enter code"
                             className="flex-1 h-10 px-3 border border-border bg-background text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
                           />
@@ -219,7 +242,15 @@ export default function CartDrawer() {
                             Apply
                           </motion.button>
                         </div>
-                        {couponApplied && (
+                        {couponError ? (
+                          <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-xs text-destructive font-medium mb-3"
+                          >
+                            {couponError}
+                          </motion.p>
+                        ) : couponApplied ? (
                           <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -227,7 +258,7 @@ export default function CartDrawer() {
                           >
                             Coupon applied!
                           </motion.p>
-                        )}
+                        ) : null}
                       </motion.div>
                     )}
                   </AnimatePresence>

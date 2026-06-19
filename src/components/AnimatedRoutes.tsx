@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "./PageTransition";
+import StorefrontLayout from "./StorefrontLayout";
 import AdminLayout from "./admin/AdminLayout";
 import AffiliateLayout from "./affiliate/AffiliateLayout";
 import { useReferralTracking } from "@/hooks/use-referral-tracking";
@@ -56,15 +57,31 @@ export default function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* Storefront */}
-        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-        <Route path="/shop" element={<PageTransition><ShopPage /></PageTransition>} />
-        <Route path="/product/:id" element={<PageTransition><ProductPage /></PageTransition>} />
+        {/* Storefront Layout */}
+        <Route element={<StorefrontLayout />}>
+          <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+          <Route path="/shop" element={<PageTransition><ShopPage /></PageTransition>} />
+          <Route path="/product/:id" element={<PageTransition><ProductPage /></PageTransition>} />
+          <Route path="/checkout" element={<ProtectedRoute><PageTransition><CheckoutPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/wishlist" element={<ProtectedRoute><PageTransition><WishlistPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute><PageTransition><OrderHistoryPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/orders/:id" element={<ProtectedRoute><PageTransition><OrderTrackPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/about" element={<PageTransition><AboutPage /></PageTransition>} />
+          <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
+          <Route path="/privacy" element={<PageTransition><PrivacyPage /></PageTransition>} />
+          <Route path="/terms" element={<PageTransition><TermsPage /></PageTransition>} />
+          <Route path="/refund-policy" element={<PageTransition><RefundPolicy /></PageTransition>} />
+          <Route path="/shipping-policy" element={<PageTransition><ShippingPolicy /></PageTransition>} />
+          <Route path="/affiliate-agreement" element={<PageTransition><AffiliateAgreement /></PageTransition>} />
+          <Route path="/cookie-policy" element={<PageTransition><CookiePolicy /></PageTransition>} />
+          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        </Route>
+
+        {/* Auth + public forms */}
         <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
-        <Route path="/checkout" element={<ProtectedRoute><PageTransition><CheckoutPage /></PageTransition></ProtectedRoute>} />
-        <Route path="/wishlist" element={<ProtectedRoute><PageTransition><WishlistPage /></PageTransition></ProtectedRoute>} />
-        <Route path="/orders" element={<ProtectedRoute><PageTransition><OrderHistoryPage /></PageTransition></ProtectedRoute>} />
-        <Route path="/orders/:id" element={<ProtectedRoute><PageTransition><OrderTrackPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/reset-password" element={<PageTransition><AuthPage /></PageTransition>} />
+
+        {/* Account / dashboard */}
         <Route path="/account" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<DashboardHome />} />
           <Route path="orders" element={<DashboardOrders />} />
@@ -76,20 +93,8 @@ export default function AnimatedRoutes() {
           <Route path="settings" element={<DashboardSettings />} />
         </Route>
 
-
         {/* Affiliate Apply */}
         <Route path="/affiliate/apply" element={<PageTransition><AffiliateApply /></PageTransition>} />
-        <Route path="/reset-password" element={<PageTransition><AuthPage /></PageTransition>} />
-
-        {/* Public Pages */}
-        <Route path="/about" element={<PageTransition><AboutPage /></PageTransition>} />
-        <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/refund-policy" element={<RefundPolicy />} />
-        <Route path="/shipping-policy" element={<ShippingPolicy />} />
-        <Route path="/affiliate-agreement" element={<AffiliateAgreement />} />
-        <Route path="/cookie-policy" element={<CookiePolicy />} />
 
         {/* Affiliate Dashboard */}
         <Route path="/affiliate" element={<ProtectedRoute requireRole="affiliate"><AffiliateLayout /></ProtectedRoute>}>

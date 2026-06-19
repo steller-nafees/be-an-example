@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronLeft, Loader2, Check, Package, Truck, Home, Clock, XCircle } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import { supabase } from "@/lib/supabase";
 
 type Order = {
@@ -67,7 +66,6 @@ export default function OrderTrackPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="flex items-center justify-center pt-40"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       </div>
     );
@@ -76,7 +74,6 @@ export default function OrderTrackPage() {
   if (notFound || !order) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="max-w-2xl mx-auto px-6 pt-32 text-center">
           <h1 className="text-2xl font-black mb-3">Order not found</h1>
           <Link to="/account" className="text-sm underline">Back to my orders</Link>
@@ -90,7 +87,6 @@ export default function OrderTrackPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <main className="max-w-3xl mx-auto px-6 pt-28 pb-16">
         <Link to="/account" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ChevronLeft size={14} /> My orders
