@@ -9,7 +9,7 @@ import { Link, useLocation } from "react-router-dom";
 import MegaMenu from "./MegaMenu";
 
 const links = [
-  { label: "Home", href: "/" },
+  { label: "Home", href: "/home" },
   { label: "Shop", href: "/shop", hasMega: true },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
@@ -86,6 +86,18 @@ export default function Navbar() {
     closeTimeout.current = setTimeout(() => setMegaOpen(false), 250);
   }, []);
 
+  const isLinkActive = (href: string) => {
+    if (href === "/shop") {
+      return location.pathname.startsWith("/shop");
+    }
+
+    if (href === "/home") {
+      return location.pathname === "/home" || location.pathname === "/";
+    }
+
+    return location.pathname === href;
+  };
+
   const isHome = location.pathname === "/";
   const bg = scrolled || !isHome || megaOpen
     ? "bg-background/95 backdrop-blur-md border-b border-border"
@@ -120,26 +132,29 @@ export default function Navbar() {
                   onMouseLeave={handleMegaLeave}
                   className="relative"
                 >
-                  <button
-                    onClick={() => setMegaOpen((p) => !p)}
-                    className="relative flex items-center gap-1 text-sm font-medium tracking-wide text-foreground/70 hover:text-foreground transition-colors group"
+                  <Link
+                    to={link.href}
+                    onClick={() => setMegaOpen(false)}
+                    className={`relative flex items-center gap-1 text-sm font-medium tracking-wide transition-colors group ${isLinkActive(link.href) ? "text-foreground" : "text-foreground/70 hover:text-foreground"}`}
                   >
                     {link.label}
                     <ChevronDown
                       size={13}
                       className={`transition-transform duration-200 ${megaOpen ? "rotate-180" : ""}`}
                     />
-                    <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-foreground transition-all duration-300 group-hover:w-full" />
-                  </button>
+                    <span
+                      className={`absolute -bottom-1 left-0 h-[1.5px] bg-foreground transition-all duration-300 ${isLinkActive(link.href) || megaOpen ? "w-full" : "w-0 group-hover:w-full"}`}
+                    />
+                  </Link>
                 </div>
               ) : (
                 <Link
                   key={link.label}
                   to={link.href}
-                  className="relative text-sm font-medium tracking-wide text-foreground/70 hover:text-foreground transition-colors group"
+                  className={`relative text-sm font-medium tracking-wide transition-colors group ${isLinkActive(link.href) ? "text-foreground" : "text-foreground/70 hover:text-foreground"}`}
                 >
                   {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-foreground transition-all duration-300 group-hover:w-full" />
+                  <span className={`absolute -bottom-1 left-0 h-[1.5px] bg-foreground transition-all duration-300 ${isLinkActive(link.href) ? "w-full" : "w-0 group-hover:w-full"}`} />
                 </Link>
               )
             )}
