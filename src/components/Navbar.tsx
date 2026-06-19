@@ -9,7 +9,7 @@ import { Link, useLocation } from "react-router-dom";
 import MegaMenu from "./MegaMenu";
 
 const links = [
-  { label: "Home", href: "/home" },
+  { label: "Home", href: "/" },
   { label: "Shop", href: "/shop", hasMega: true },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
