@@ -20,6 +20,8 @@ create table if not exists public.products (
   price        numeric(10,2) not null check (price >= 0),
   image        text not null,
   images       text[] not null default '{}',
+  archive_image text,
+  archive_hover_image text,
   category     text not null,
   sizes        text[] not null default '{}',
   colors       jsonb not null default '[]'::jsonb,

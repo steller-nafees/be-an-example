@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 
 export interface CartItem {
   id: string;
+  variantId?: string;
+  printfulSyncVariantId?: number | null;
   name: string;
   price: number;
   size: string;

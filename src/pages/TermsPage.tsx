@@ -1,5 +1,8 @@
+import { useBrandSettings } from "@/context/LogoContext";
+
 export default function TermsPage() {
   const lastUpdated = "June 17, 2024";
+  const { settings } = useBrandSettings();
 
   return (
     <div className="min-h-screen bg-background">
@@ -207,9 +210,9 @@ export default function TermsPage() {
               For questions about these Terms of Service, please contact us:
             </p>
             <div className="bg-secondary/30 p-6 rounded-lg mt-4">
-              <p className="font-semibold">Be An Example Inc.</p>
-              <p className="text-muted-foreground">Email: legal@beanexample.com</p>
-              <p className="text-muted-foreground">Support: support@beanexample.com</p>
+              <p className="font-semibold">{settings.companyName}</p>
+              <p className="text-muted-foreground">Email: {settings.legalEmail}</p>
+              <p className="text-muted-foreground">Support: {settings.supportEmail}</p>
             </div>
           </div>
         </div>

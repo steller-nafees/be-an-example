@@ -1,5 +1,8 @@
+import { useBrandSettings } from "@/context/LogoContext";
+
 export default function AffiliateAgreement() {
   const lastUpdated = "June 17, 2024";
+  const { settings } = useBrandSettings();
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,9 +146,9 @@ export default function AffiliateAgreement() {
           <div>
             <h2 className="text-2xl font-bold mb-4">9. Intellectual Property</h2>
             <p className="text-muted-foreground">
-              All Be An Example trademarks, logos, and marketing materials are the property of Be An Example Inc. 
-              You may use approved materials only for promoting Be An Example products. You retain rights to your 
-              original content (blog posts, videos, etc.), but grant Be An Example a license to use your content 
+              All {settings.brandName} trademarks, logos, and marketing materials are the property of {settings.companyName}. 
+              You may use approved materials only for promoting {settings.brandName} products. You retain rights to your 
+              original content (blog posts, videos, etc.), but grant {settings.brandName} a license to use your content 
               for promotional purposes.
             </p>
           </div>
@@ -237,9 +240,9 @@ export default function AffiliateAgreement() {
               For affiliate program questions or support:
             </p>
             <div className="bg-secondary/30 p-6 rounded-lg mt-4">
-              <p className="font-semibold">Be An Example Affiliate Program</p>
-              <p className="text-muted-foreground">Email: affiliates@beanexample.com</p>
-              <p className="text-muted-foreground">Support: support@beanexample.com</p>
+              <p className="font-semibold">{settings.brandName} Affiliate Program</p>
+              <p className="text-muted-foreground">Email: {settings.affiliateEmail}</p>
+              <p className="text-muted-foreground">Support: {settings.supportEmail}</p>
               <p className="text-muted-foreground">Apply: /affiliate/apply</p>
             </div>
           </div>

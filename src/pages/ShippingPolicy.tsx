@@ -1,5 +1,8 @@
+import { useBrandSettings } from "@/context/LogoContext";
+
 export default function ShippingPolicy() {
   const lastUpdated = "June 17, 2024";
+  const { settings } = useBrandSettings();
 
   return (
     <div className="min-h-screen bg-background">
@@ -17,24 +20,19 @@ export default function ShippingPolicy() {
           <div>
             <h2 className="text-2xl font-bold mb-4">1. Shipping Methods</h2>
             <p className="text-muted-foreground mb-3">
-              We offer multiple shipping options to meet your needs:
+              We offer free shipping on all orders, with reliable delivery times for domestic and international customers.
+            </p>
+            <p className="text-muted-foreground mb-3">
+              Orders are produced and shipped through our third-party fulfillment partner, Printful, so delivery times may vary based on their processing schedule.
             </p>
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold">Standard Shipping (5-7 Business Days)</h3>
-                <p className="text-muted-foreground">Our most economical option. Perfect if you're not in a hurry.</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">Express Shipping (2-3 Business Days)</h3>
-                <p className="text-muted-foreground">For customers who need their items quickly.</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">Overnight Shipping (Next Business Day)</h3>
-                <p className="text-muted-foreground">Fastest option for urgent orders.</p>
+                <h3 className="text-lg font-semibold">Standard Shipping (7-15 Business Days)</h3>
+                <p className="text-muted-foreground">Free shipping on every order. Delivered within 7-15 business days.</p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold">International Shipping</h3>
-                <p className="text-muted-foreground">Available to 50+ countries with varying delivery times.</p>
+                <p className="text-muted-foreground">Free international shipping is available to supported countries with varying delivery times.</p>
               </div>
             </div>
           </div>
@@ -51,8 +49,7 @@ export default function ShippingPolicy() {
               <li>Weight and dimensions of package</li>
             </ul>
             <p className="text-muted-foreground mt-4">
-              All shipping costs are calculated and displayed at checkout before you complete your purchase. 
-              We also offer free shipping on orders over $75 (Standard Shipping only).
+              All orders qualify for free shipping, with no additional delivery fees.
             </p>
           </div>
 
@@ -85,18 +82,8 @@ export default function ShippingPolicy() {
               <tbody>
                 <tr>
                   <td className="border border-border p-3 font-semibold">Standard</td>
-                  <td className="border border-border p-3">5-7 business days</td>
+                  <td className="border border-border p-3">7-15 business days</td>
                   <td className="border border-border p-3">10-21 business days</td>
-                </tr>
-                <tr className="bg-secondary/20">
-                  <td className="border border-border p-3 font-semibold">Express</td>
-                  <td className="border border-border p-3">2-3 business days</td>
-                  <td className="border border-border p-3">5-7 business days</td>
-                </tr>
-                <tr>
-                  <td className="border border-border p-3 font-semibold">Overnight</td>
-                  <td className="border border-border p-3">Next business day</td>
-                  <td className="border border-border p-3">N/A</td>
                 </tr>
               </tbody>
             </table>
@@ -200,12 +187,8 @@ export default function ShippingPolicy() {
             <h2 className="text-2xl font-bold mb-4">13. Holiday Shipping</h2>
             <p className="text-muted-foreground">
               During holiday seasons, shipping times may be extended due to carrier volume. 
-              We'll notify you if your order will experience delays. Express and Overnight 
-              shipping options remain available (subject to carrier availability).
+                  We'll notify you if your order will experience delays.
             </p>
-          </div>
-
-          <div>
             <h2 className="text-2xl font-bold mb-4">14. Delivery Address Changes</h2>
             <p className="text-muted-foreground mb-3">
               To modify your delivery address:
@@ -233,9 +216,9 @@ export default function ShippingPolicy() {
               For questions about shipping, please contact our support team:
             </p>
             <div className="bg-secondary/30 p-6 rounded-lg mt-4">
-              <p className="font-semibold">Be An Example Inc.</p>
-              <p className="text-muted-foreground">Email: shipping@beanexample.com</p>
-              <p className="text-muted-foreground">Support: support@beanexample.com</p>
+              <p className="font-semibold">{settings.companyName}</p>
+              <p className="text-muted-foreground">Email: {settings.shippingEmail}</p>
+              <p className="text-muted-foreground">Support: {settings.supportEmail}</p>
             </div>
           </div>
         </div>

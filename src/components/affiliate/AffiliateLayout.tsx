@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
   Link2,
@@ -28,6 +29,7 @@ const navItems = [
 
 export default function AffiliateLayout() {
   const location = useLocation();
+  const { signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -92,7 +94,15 @@ export default function AffiliateLayout() {
         <div className="flex-1 py-4 overflow-y-auto">
           <SidebarContent />
         </div>
-        <div className="p-3 border-t border-border">
+        <div className="p-3 border-t border-border space-y-2">
+          <button
+            type="button"
+            onClick={signOut}
+            className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-foreground/[0.03]"
+          >
+            <LogOut size={18} strokeWidth={1.5} />
+            {!collapsed && <span>Sign Out</span>}
+          </button>
           <Link
             to="/"
             className="flex items-center gap-3 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-foreground/[0.03]"

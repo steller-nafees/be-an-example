@@ -8,6 +8,7 @@ import InvoiceDownloadButton from "@/components/InvoiceDownload";
 import type { Order } from "@/context/OrderContext";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useBrandSettings } from "@/context/LogoContext";
 import { getReferralCode } from "@/hooks/use-referral-tracking";
 import { toast } from "@/hooks/use-toast";
 
@@ -93,6 +94,7 @@ function validateStep2(payment: {
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
+  const { settings } = useBrandSettings();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -107,7 +109,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [payment, setPayment] = useState({ cardNumber: "", expiry: "", cvc: "", cardName: "" });
 
-  const deliveryCost = deliveryMethod === "express" ? 15 : deliveryMethod === "overnight" ? 25 : 0;
+  const deliveryCost = 0;
   const total = totalPrice + deliveryCost;
 
   const goTo = (newStep: number) => {
@@ -198,7 +200,7 @@ export default function CheckoutPage() {
       p_state: shipping.state,
       p_zip: shipping.zip,
       p_country: shipping.country,
-      p_shipping_method: deliveryMethod,
+      p_shipping_method: "standard",
       p_delivery_fee: deliveryCost,
       p_subtotal: totalPrice,
       p_tax: tax,
@@ -206,6 +208,8 @@ export default function CheckoutPage() {
       p_affiliate_code: affiliateCode,
       p_items: items.map((it) => ({
         product_id: String(it.id),
+        variant_id: it.variantId ?? null,
+        printful_sync_variant_id: it.printfulSyncVariantId ?? null,
         name: it.name,
         image: it.image,
         size: it.size ?? "",
@@ -221,12 +225,23 @@ export default function CheckoutPage() {
       return;
     }
 
+    const { error: printfulErr } = await supabase.functions.invoke("printful-submit-order", {
+      body: { orderId: dbOrder.id },
+    });
+
+    if (printfulErr) {
+      toast({
+        title: "Order saved",
+        description: "Printful automation needs attention in admin before fulfillment can continue.",
+      });
+    }
+
     const createdLocalOrder: Order = {
       id: dbOrder.id,
       formattedId: dbOrder.formatted_id ?? `BAEO-0000`,
       customerInfo: shipping,
       items,
-      shippingMethod: deliveryMethod as "standard" | "express" | "overnight",
+      shippingMethod: "standard",
       deliveryFee: deliveryCost,
       subtotal: totalPrice,
       tax,
@@ -278,7 +293,7 @@ export default function CheckoutPage() {
               </motion.h1>
               <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
                 className="text-sm text-muted-foreground mb-2">
-                Thank you for shopping with BE AN EXAMPLE.
+                Thank you for shopping with {settings.brandName}.
               </motion.p>
               <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
                 className="text-xs text-muted-foreground mb-10">
@@ -413,9 +428,7 @@ export default function CheckoutPage() {
                     <div className="space-y-3 sm:space-y-4">
                       <h2 className="text-xs sm:text-sm font-bold tracking-widest uppercase text-foreground mb-4 sm:mb-6">Delivery Method</h2>
                       {[
-                        { id: "standard", label: "Standard Shipping", desc: "5–7 business days", price: "Free", badge: "Recommended" },
-                        { id: "express", label: "Express Shipping", desc: "2–3 business days", price: "$15.00", badge: "" },
-                        { id: "overnight", label: "Overnight", desc: "Next business day", price: "$25.00", badge: "" },
+                        { id: "standard", label: "Free Shipping", desc: "5–7 business days", price: "Free", badge: "Recommended" },
                       ].map((m) => (
                         <motion.button
                           key={m.id}

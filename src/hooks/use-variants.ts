@@ -16,6 +16,7 @@ export interface ProductVariant {
   color_id: string | null
   size: string
   sku: string | null
+  printful_sync_variant_id: number | null
   stock: number
   price: number | null
 }
@@ -61,7 +62,15 @@ export interface SaveColorInput {
   value: string
   images: string[]
   position: number
-  variants: { size: string; stock: number; sku?: string | null; price?: number | null; id?: string }[]
+  variants: {
+    size: string
+    stock: number
+    sku?: string | null
+    printful_sync_variant_id?: number | null
+    price?: number | null
+    base_cost?: number | null
+    id?: string
+  }[]
 }
 
 export const useSaveProductVariants = () => {
@@ -75,16 +84,23 @@ export const useSaveProductVariants = () => {
       colors: SaveColorInput[]
     }) => {
       // Fetch existing
-      const [{ data: existingColors }, { data: existingVariants }] = await Promise.all([
+      const [
+        { data: existingColors, error: colorsFetchError },
+        { data: existingVariants, error: variantsFetchError },
+      ] = await Promise.all([
         supabase.from('product_colors').select('id').eq('product_id', productId),
         supabase.from('product_variants').select('id').eq('product_id', productId),
       ])
+      if (colorsFetchError) throw colorsFetchError
+      if (variantsFetchError) throw variantsFetchError
+
       const keepColorIds = new Set(colors.filter((c) => c.id).map((c) => c.id!))
       const colorsToDelete = (existingColors || [])
         .map((c: any) => c.id)
         .filter((id: string) => !keepColorIds.has(id))
       if (colorsToDelete.length) {
-        await supabase.from('product_colors').delete().in('id', colorsToDelete)
+        const { error } = await supabase.from('product_colors').delete().in('id', colorsToDelete)
+        if (error) throw error
       }
 
       // Upsert colors and collect ids
@@ -120,9 +136,11 @@ export const useSaveProductVariants = () => {
             color_id: colorIdMap[i],
             size: v.size,
             sku: v.sku ?? null,
+            printful_sync_variant_id: v.printful_sync_variant_id ?? null,
             stock: v.stock ?? 0,
             price: v.price ?? null,
-          })
+             base_cost: v.base_cost ?? null,
+           })
         })
       })
 
@@ -130,7 +148,8 @@ export const useSaveProductVariants = () => {
         .map((v: any) => v.id)
         .filter((id: string) => !keepVariantIds.has(id))
       if (variantsToDelete.length) {
-        await supabase.from('product_variants').delete().in('id', variantsToDelete)
+        const { error } = await supabase.from('product_variants').delete().in('id', variantsToDelete)
+        if (error) throw error
       }
 
       if (variantRows.length) {
@@ -144,6 +163,7 @@ export const useSaveProductVariants = () => {
       qc.invalidateQueries({ queryKey: ['product_colors', vars.productId] })
       qc.invalidateQueries({ queryKey: ['product_variants', vars.productId] })
       qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['product', vars.productId] })
     },
   })
 }

@@ -14,6 +14,7 @@ import {
   RotateCcw,
   ShieldCheck,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { useProduct, useProducts } from "@/hooks/use-products";
 import { useProductColors, useProductVariants } from "@/hooks/use-variants";
@@ -30,6 +31,15 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 /* ---------------- helpers ---------------- */
+
+type VariantSizeOption = {
+  id?: string | null;
+  size: string;
+  stock: number;
+  price: number | null;
+  sku?: string | null;
+  printfulSyncVariantId: number | null;
+};
 
 function useZoom() {
   const ref = useRef<HTMLDivElement>(null);
@@ -61,18 +71,24 @@ export default function ProductPage() {
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [lightbox, setLightbox] = useState(false);
+  const [loadingGallery, setLoadingGallery] = useState(false);
 
+  // reset when switching products
   useEffect(() => {
     setSelectedColorIdx(0);
     setSelectedImage(0);
     setSelectedSize("");
+    setSelectedVariantId(null);
   }, [id]);
+
+  // when color changes, preserve selected size if still available
   useEffect(() => {
     setSelectedImage(0);
-    setSelectedSize("");
+    // size preservation handled after sizeOptions computed below
   }, [selectedColorIdx]);
 
   const colors = useMemo(() => {
@@ -96,15 +112,24 @@ export default function ProductPage() {
   const activeImages =
     currentColor?.images?.length ? currentColor.images : product?.images || [];
 
-  const sizeOptions = useMemo(() => {
+  const sizeOptions = useMemo<VariantSizeOption[]>(() => {
     if (variants.length && currentColor?.id) {
       return variants
         .filter((v) => v.color_id === currentColor.id)
-        .map((v) => ({ size: v.size, stock: v.stock }));
+        .map((v) => ({
+          id: v.id,
+          size: v.size,
+          stock: v.stock,
+          price: v.price,
+          sku: (v as any).sku ?? null,
+          printfulSyncVariantId: v.printful_sync_variant_id,
+        }));
     }
     return (product?.sizes || []).map((s) => ({
       size: s,
       stock: product?.stock ?? 0,
+      price: null,
+      printfulSyncVariantId: null,
     }));
   }, [variants, currentColor, product]);
 
@@ -115,10 +140,132 @@ export default function ProductPage() {
 
   const zoom = useZoom();
 
+  // image cache to avoid reloading same images
+  const imageCache = useRef<Record<string, boolean>>({});
+
+  const preloadImages = async (urls: string[]) => {
+    const toLoad = urls.filter((u) => u && !imageCache.current[u]);
+    if (!toLoad.length) return;
+    await Promise.all(
+      toLoad.map(
+        (u) =>
+          new Promise<void>((res, rej) => {
+            const img = new Image();
+            img.src = u;
+            img.onload = () => {
+              imageCache.current[u] = true;
+              res();
+            };
+            img.onerror = () => {
+              imageCache.current[u] = true;
+              res();
+            };
+          })
+      )
+    );
+  };
+
+  // When sizeOptions or selectedSize changes, attempt to find a matching variant id
+  useEffect(() => {
+    // preserve selectedSize if still available, otherwise clear
+    if (selectedSize) {
+      const exists = sizeOptions.find((s) => s.size === selectedSize);
+      if (!exists) setSelectedSize("");
+    }
+
+    const sv = selectedSize
+      ? sizeOptions.find((s) => s.size === selectedSize)
+      : undefined;
+    const newVariantId = sv?.id ?? null;
+
+    // if variant changed, update URL and preload images
+    const doUpdate = async () => {
+      if (newVariantId === selectedVariantId) return;
+      setSelectedVariantId(newVariantId);
+      // update history for back/forward compatibility
+      try {
+        const url = new URL(window.location.href);
+        if (newVariantId) url.searchParams.set("variant", String(newVariantId));
+        else url.searchParams.delete("variant");
+        window.history.pushState({ variant: newVariantId }, "", url.toString());
+      } catch (e) {}
+
+      // prepare images for the selected color/variant
+      const images = currentColor?.images && currentColor.images.length ? currentColor.images : product.images || [product.image];
+      setLoadingGallery(true);
+      await preloadImages(images);
+      // also preload adjacent variant images (sizeOptions neighbors)
+      const idx = sizeOptions.findIndex((s) => s.id === newVariantId || s.size === selectedSize);
+      const neighborIdxs = [idx - 1, idx + 1].filter((i) => i >= 0 && i < sizeOptions.length);
+      for (const ni of neighborIdxs) {
+        const neighbor = sizeOptions[ni];
+        // neighbor images live on color level; preload same set
+        await preloadImages(images);
+      }
+      // switch to first image for new variant
+      setSelectedImage(0);
+      setLoadingGallery(false);
+    };
+
+    doUpdate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSize, sizeOptions, currentColor?.id]);
+
+  // handle browser back/forward to restore variant selection
+  useEffect(() => {
+    const onPop = () => {
+      try {
+        const url = new URL(window.location.href);
+        const v = url.searchParams.get("variant");
+        if (v) {
+          // attempt to set selectedSize to matching variant if available
+          const found = sizeOptions.find((s) => s.id === v);
+          if (found) {
+            setSelectedSize(found.size);
+          }
+        }
+      } catch (e) {}
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sizeOptions]);
+
+  // on mount, if URL has variant param, try to set matching size
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const v = url.searchParams.get("variant");
+      if (v) {
+        const found = sizeOptions.find((s) => s.id === v);
+        if (found) setSelectedSize(found.size);
+      }
+    } catch (e) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const selectedVariant = useMemo(() => {
+    return (
+      sizeOptions.find((s) => s.size === selectedSize) ||
+      sizeOptions.find((s) => s.id === selectedVariantId) ||
+      undefined
+    );
+  }, [sizeOptions, selectedSize, selectedVariantId]);
+
+  const displayPrice = selectedVariant?.price ?? product?.price ?? 0;
+
   // subtle parallax on hero image
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const parallaxY = useTransform(scrollY, [0, 600], [0, -40]);
+
+  // FIX: this hook was previously declared after the early `return` statements
+  // below (inside the touch-swipe handlers section). Because React requires
+  // every hook to run in the same order on every render, calling useRef()
+  // conditionally (only on renders that don't hit an early return) caused
+  // "Rendered more hooks than during the previous render". Moving it up here,
+  // alongside all other hooks and before any conditional return, fixes it.
+  const touchStartX = useRef<number | null>(null);
 
   /* ---------------- loading / not found ---------------- */
   if (isLoading) {
@@ -159,12 +306,15 @@ export default function ProductPage() {
   const handleAdd = () => {
     const size =
       selectedSize || sizeOptions[2]?.size || sizeOptions[0]?.size || "M";
+    const selectedVariant = sizeOptions.find((option) => option.size === size);
     const color = currentColor?.name || "";
     for (let i = 0; i < quantity; i++) {
       addItem({
         id: product.id,
+        variantId: selectedVariant?.id,
+        printfulSyncVariantId: selectedVariant?.printfulSyncVariantId ?? null,
         name: product.name,
-        price: product.price,
+        price: selectedVariant?.price ?? product.price,
         size,
         color,
         image: activeImages[0] || product.image,
@@ -184,6 +334,19 @@ export default function ProductPage() {
     setSelectedImage((i) =>
       (i - 1 + activeImages.length) % Math.max(activeImages.length, 1)
     );
+
+  // simple touch swipe handlers for mobile gallery
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const threshold = 40;
+    if (dx > threshold) prevImg();
+    else if (dx < -threshold) nextImg();
+    touchStartX.current = null;
+  };
 
   /* ---------------- render ---------------- */
   return (
@@ -254,28 +417,36 @@ export default function ProductPage() {
                   onMouseLeave={() => zoom.setActive(false)}
                   onMouseMove={zoom.onMove}
                   onClick={() => setLightbox(true)}
+                  onTouchStart={onTouchStart}
+                  onTouchEnd={onTouchEnd}
                   style={{ y: parallaxY }}
                   className="relative overflow-hidden bg-muted aspect-[3/4] cursor-zoom-in group"
                 >
-                  <AnimatePresence mode="wait">
+                  <AnimatePresence initial={false} mode="wait">
                     <motion.img
-                      key={`${selectedColorIdx}-${selectedImage}`}
+                      key={`${selectedVariantId || selectedColorIdx}-${selectedImage}`}
                       src={activeImages[selectedImage] || product.image}
                       alt={product.name}
                       initial={{ opacity: 0, scale: 1.02 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                       className="w-full h-full object-cover"
                       style={{
                         transformOrigin: `${zoom.pos.x}% ${zoom.pos.y}%`,
                         transform: zoom.active ? "scale(1.6)" : "scale(1)",
                         transition: zoom.active
-                          ? "transform 0.15s ease-out"
-                          : "transform 0.4s ease",
+                          ? "transform 0.12s ease-out"
+                          : "transform 0.3s ease",
                       }}
                     />
                   </AnimatePresence>
+
+                  {loadingGallery && (
+                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/30">
+                      <Loader2 className="animate-spin text-foreground" />
+                    </div>
+                  )}
 
                   {/* badges */}
                   <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
@@ -372,15 +543,19 @@ export default function ProductPage() {
                 </span>
               </div>
 
-              <p className="text-3xl font-light text-foreground mb-8 tabular-nums">
-                ${product.price}
+              <p className="text-3xl font-light text-foreground mb-2 tabular-nums">
+                ${displayPrice}
               </p>
+              {selectedVariant?.sku && (
+                <p className="text-xs text-muted-foreground mb-6">SKU: {selectedVariant.sku}</p>
+              )}
 
               <p className="text-[15px] text-muted-foreground leading-relaxed mb-10 max-w-md">
                 {product.description}
               </p>
-
-              {/* Color */}
+              <p className="text-sm text-muted-foreground mb-10 max-w-md">
+                Free shipping is included on every order, no additional delivery charges.
+              </p>
               {colors.length > 0 && (
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-3">
@@ -523,7 +698,7 @@ export default function ProductPage() {
               {/* Trust */}
               <div className="grid grid-cols-3 gap-3 py-6 border-y border-border mb-6">
                 {[
-                  { icon: Truck, label: "Free shipping", sub: "Over $100" },
+                  { icon: Truck, label: "Free shipping", sub: "On All Products" },
                   { icon: RotateCcw, label: "Easy returns", sub: "30 days" },
                   { icon: ShieldCheck, label: "Secure", sub: "Checkout" },
                 ].map((t, i) => (
@@ -562,8 +737,7 @@ export default function ProductPage() {
                     Shipping & Returns
                   </AccordionTrigger>
                   <AccordionContent className="text-sm text-muted-foreground leading-relaxed space-y-1">
-                    <p>· Free standard shipping on orders over $100.</p>
-                    <p>· Express delivery available at checkout.</p>
+                    <p>· Free standard shipping on all products.</p>
                     <p>· Hassle-free returns within 30 days.</p>
                   </AccordionContent>
                 </AccordionItem>
@@ -725,7 +899,7 @@ export default function ProductPage() {
           } disabled:opacity-50`}
         >
           <ShoppingBag size={14} />
-          {added ? "Added" : outOfStock ? "Out of Stock" : `Add · $${product.price}`}
+          {added ? "Added" : outOfStock ? "Out of Stock" : `Add · $${displayPrice}`}
         </motion.button>
       </div>
 

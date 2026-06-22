@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield,
@@ -15,12 +15,12 @@ import {
 } from "lucide-react";
 import MetricCard from "@/components/admin/MetricCard";
 import {
-  mockFraudAlerts,
-  fraudStats,
   FraudAlert,
   FraudAlertStatus,
+  fetchFraudAlerts,
 } from "@/lib/fraud-detection";
 import ModalPortal from "@/components/ModalPortal";
+import { supabase } from "@/lib/supabase";
 
 const statusConfig: Record<FraudAlertStatus, { label: string; className: string }> = {
   pending_review: { label: "Pending", className: "bg-amber-50 text-amber-700 border-amber-200" },
@@ -65,19 +65,59 @@ function SignalTag({ type }: { type: string }) {
 }
 
 export default function AdminFraud() {
-  const [alerts, setAlerts] = useState(mockFraudAlerts);
+  const [alerts, setAlerts] = useState<FraudAlert[]>([]);
+  const [fraudStats, setFraudStats] = useState({ totalAlerts: 0, pendingReview: 0, avgRiskScore: 0 });
   const [filter, setFilter] = useState<"all" | FraudAlertStatus>("all");
   const [selectedAlert, setSelectedAlert] = useState<FraudAlert | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const filtered =
-    filter === "all" ? alerts : alerts.filter((a) => a.status === filter);
+  useEffect(() => {
+    const loadFraudAlerts = async () => {
+      setLoading(true);
+      const { alerts: data, stats } = await fetchFraudAlerts();
+      setAlerts(data);
+      setFraudStats(stats);
+      setLoading(false);
+    };
 
-  const updateStatus = (id: string, status: FraudAlertStatus) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status } : a))
-    );
-    if (selectedAlert?.id === id) {
-      setSelectedAlert((prev) => (prev ? { ...prev, status } : null));
+    loadFraudAlerts();
+
+    // Subscribe to real-time updates on fraud_alerts
+    const channel = supabase
+      .channel('fraud_alerts_updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'fraud_alerts' },
+        () => {
+          loadFraudAlerts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const updateStatus = async (id: string, status: FraudAlertStatus) => {
+    try {
+      const { error } = await supabase
+        .from('fraud_alerts')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setAlerts((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status } : a))
+      );
+      if (selectedAlert?.id === id) {
+        setSelectedAlert((prev) => (prev ? { ...prev, status } : null));
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error updating fraud alert status:', err);
     }
   };
 
@@ -97,9 +137,14 @@ export default function AdminFraud() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard label="Total Alerts" value={fraudStats.totalAlerts} icon={AlertTriangle} index={0} />
         <MetricCard label="Pending Review" value={fraudStats.pendingReview} icon={Eye} index={1} />
-        <MetricCard label="Blocked Commissions" value={fraudStats.blockedCommissions} icon={Ban} index={2} />
-        <MetricCard label="Avg Risk Score" value={fraudStats.avgRiskScore} icon={TrendingDown} index={3} />
+        <MetricCard label="Avg Risk Score" value={fraudStats.avgRiskScore} icon={TrendingDown} index={2} />
       </div>
+
+      {loading && (
+        <div className="text-center py-8 text-muted-foreground">
+          Loading fraud alerts...
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-1 border-b border-border">
@@ -119,27 +164,29 @@ export default function AdminFraud() {
       </div>
 
       {/* Fraud Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-background border border-border rounded-lg overflow-hidden"
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/40">
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Alert</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Affiliate</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Signals</th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Risk</th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Verdict</th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((alert) => (
+      {!loading && (
+        <>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-background border border-border rounded-lg overflow-hidden"
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Alert</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Affiliate</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Signals</th>
+                    <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Risk</th>
+                    <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Verdict</th>
+                    <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(filter === "all" ? alerts : alerts.filter((a) => a.status === filter)).map((alert) => (
                 <motion.tr
                   key={alert.id}
                   initial={{ opacity: 0 }}
@@ -211,7 +258,7 @@ export default function AdminFraud() {
                   </td>
                 </motion.tr>
               ))}
-              {filtered.length === 0 && (
+              {(filter === "all" ? alerts : alerts.filter((a) => a.status === filter)).length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground text-sm">
                     No alerts found.
@@ -221,7 +268,16 @@ export default function AdminFraud() {
             </tbody>
           </table>
         </div>
-      </motion.div>
+        </motion.div>
+
+        {alerts.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-border">
+            <Shield size={32} className="mx-auto mb-2 opacity-50" />
+            <p>No fraud alerts detected. Your system is clean!</p>
+          </div>
+        )}
+      </>
+      )}
 
       {/* Detail Modal */}
       <ModalPortal><AnimatePresence>

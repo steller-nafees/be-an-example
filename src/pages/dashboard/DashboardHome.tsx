@@ -54,6 +54,7 @@ export default function DashboardHome() {
       const { data, count } = await supabase
         .from("orders")
         .select("id,total,status,created_at", { count: "exact" })
+        .neq("status", "cancelled")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1);

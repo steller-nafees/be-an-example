@@ -11,9 +11,9 @@ export default function Invoice({ order }: InvoiceProps) {
   const { logo } = useLogo();
   const shippingFeeLabel = {
     standard: "Standard Shipping",
-    express: "Express Shipping",
-    overnight: "Overnight Shipping",
-  }[order.shippingMethod];
+    express: "Standard Shipping",
+    overnight: "Standard Shipping",
+  }[order.shippingMethod] ?? "Shipping";
 
   return (
     <div className="w-full max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-sm print:shadow-none print:p-0" id="invoice-content">

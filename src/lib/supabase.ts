@@ -1,10 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Publishable (anon) credentials — safe to ship in client code.
-const supabaseUrl =
-  import.meta.env.VITE_SUPABASE_URL ?? 'https://xanccckavsjyvvmiywos.supabase.co'
-const supabaseAnonKey =
-  import.meta.env.VITE_SUPABASE_ANON_KEY ??
-  'sb_publishable_piYClqJExl-66UtA7EXTWA_AbN-MEyE'
+// Read publishable (anon) credentials from environment only.
+// Do NOT keep fallbacks or hardcoded keys in source.
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+if (!supabaseUrl || !supabaseAnonKey) {
+  // Warn in development if env vars are missing — do not hardcode keys.
+  // Deployment environments should provide these via platform secrets.
+  // eslint-disable-next-line no-console
+  console.warn(
+    'Missing Supabase environment variables. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.'
+  );
+}
+
+export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '')

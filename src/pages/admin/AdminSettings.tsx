@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { Upload, Save, CreditCard, User, Store, X } from "lucide-react";
-import { useLogo } from "@/context/LogoContext";
+import { Upload, Save, CreditCard, User, Store, X, RotateCcw } from "lucide-react";
+import { defaultBrandSettings, type BrandSettings, useBrandSettings, useLogo } from "@/context/LogoContext";
 import { useToast } from "@/hooks/use-toast";
 
 const tabs = [
@@ -13,11 +13,34 @@ const tabs = [
 export default function AdminSettings() {
   const [activeTab, setActiveTab] = useState<string>("store");
   const { logo, uploadLogo, removeLogo } = useLogo();
+  const { settings, updateSettings, resetSettings } = useBrandSettings();
+  const [settingsDraft, setSettingsDraft] = useState<BrandSettings>(settings);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSettingChange = (field: keyof BrandSettings, value: string) => {
+    setSettingsDraft((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleSaveStoreSettings = () => {
+    updateSettings(settingsDraft);
+    toast({
+      title: "Store settings saved",
+      description: "Company details now update across the store.",
+    });
+  };
+
+  const handleResetStoreSettings = () => {
+    resetSettings();
+    setSettingsDraft(defaultBrandSettings);
+    toast({
+      title: "Store settings reset",
+      description: "Default company details have been restored.",
+    });
+  };
+
+  const handleLogoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -95,20 +118,113 @@ export default function AdminSettings() {
         {activeTab === "store" && (
           <div className="space-y-6">
             <div className="bg-background border border-border rounded-lg p-5 space-y-5">
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Brand Name</label>
-                <input
-                  type="text"
-                  defaultValue="BE AN EXAMPLE"
-                  className="w-full h-10 bg-background border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-colors"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field
+                  label="Brand Name"
+                  value={settingsDraft.brandName}
+                  onChange={(value) => handleSettingChange("brandName", value)}
+                />
+                <Field
+                  label="Company Name"
+                  value={settingsDraft.companyName}
+                  onChange={(value) => handleSettingChange("companyName", value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Brand Description</label>
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Tagline</label>
                 <textarea
                   rows={3}
-                  defaultValue="Don't follow trends. Set them."
+                  value={settingsDraft.tagline}
+                  onChange={(event) => handleSettingChange("tagline", event.target.value)}
                   className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-colors resize-none"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field
+                  label="Support Email"
+                  type="email"
+                  value={settingsDraft.supportEmail}
+                  onChange={(value) => handleSettingChange("supportEmail", value)}
+                />
+                <Field
+                  label="Privacy Email"
+                  type="email"
+                  value={settingsDraft.privacyEmail}
+                  onChange={(value) => handleSettingChange("privacyEmail", value)}
+                />
+                <Field
+                  label="Legal Email"
+                  type="email"
+                  value={settingsDraft.legalEmail}
+                  onChange={(value) => handleSettingChange("legalEmail", value)}
+                />
+                <Field
+                  label="Shipping Email"
+                  type="email"
+                  value={settingsDraft.shippingEmail}
+                  onChange={(value) => handleSettingChange("shippingEmail", value)}
+                />
+                <Field
+                  label="Affiliate Email"
+                  type="email"
+                  value={settingsDraft.affiliateEmail}
+                  onChange={(value) => handleSettingChange("affiliateEmail", value)}
+                />
+                <Field
+                  label="Admin Email"
+                  type="email"
+                  value={settingsDraft.adminEmail}
+                  onChange={(value) => handleSettingChange("adminEmail", value)}
+                />
+                <Field
+                  label="Phone"
+                  type="tel"
+                  value={settingsDraft.phone}
+                  onChange={(value) => handleSettingChange("phone", value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field
+                  label="Address Line 1"
+                  value={settingsDraft.addressLine1}
+                  onChange={(value) => handleSettingChange("addressLine1", value)}
+                />
+                <Field
+                  label="Address Line 2"
+                  value={settingsDraft.addressLine2}
+                  onChange={(value) => handleSettingChange("addressLine2", value)}
+                />
+                <Field
+                  label="Weekday Hours"
+                  value={settingsDraft.weekdayHours}
+                  onChange={(value) => handleSettingChange("weekdayHours", value)}
+                />
+                <Field
+                  label="Weekend Hours"
+                  value={settingsDraft.weekendHours}
+                  onChange={(value) => handleSettingChange("weekendHours", value)}
+                />
+                <Field
+                  label="Closed Note"
+                  value={settingsDraft.closedNote}
+                  onChange={(value) => handleSettingChange("closedNote", value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Field
+                  label="Facebook URL"
+                  value={settingsDraft.facebookUrl}
+                  onChange={(value) => handleSettingChange("facebookUrl", value)}
+                />
+                <Field
+                  label="Instagram URL"
+                  value={settingsDraft.instagramUrl}
+                  onChange={(value) => handleSettingChange("instagramUrl", value)}
+                />
+                <Field
+                  label="Twitter URL"
+                  value={settingsDraft.twitterUrl}
+                  onChange={(value) => handleSettingChange("twitterUrl", value)}
                 />
               </div>
               <div>
@@ -163,10 +279,22 @@ export default function AdminSettings() {
                 </div>
               </div>
             </div>
-            <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-sm font-semibold rounded-md hover:bg-foreground/90 transition-colors">
-              <Save size={15} />
-              Save Changes
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleSaveStoreSettings}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-sm font-semibold rounded-md hover:bg-foreground/90 transition-colors"
+              >
+                <Save size={15} />
+                Save Changes
+              </button>
+              <button
+                onClick={handleResetStoreSettings}
+                className="inline-flex items-center gap-2 px-5 py-2.5 border border-border text-sm font-semibold rounded-md text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                <RotateCcw size={15} />
+                Reset Defaults
+              </button>
+            </div>
           </div>
         )}
 
@@ -232,16 +360,43 @@ export default function AdminSettings() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Email</label>
-                <input type="email" defaultValue="admin@beanexample.com" className="w-full h-10 bg-background border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-colors" />
+                <input type="email" value={settingsDraft.adminEmail} onChange={(event) => handleSettingChange("adminEmail", event.target.value)} className="w-full h-10 bg-background border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-colors" />
               </div>
             </div>
-            <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-sm font-semibold rounded-md hover:bg-foreground/90 transition-colors">
+            <button
+              onClick={handleSaveStoreSettings}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-sm font-semibold rounded-md hover:bg-foreground/90 transition-colors"
+            >
               <Save size={15} />
               Save Profile
             </button>
           </div>
         )}
       </motion.div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
+        className="w-full h-10 bg-background border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-colors"
+      />
     </div>
   );
 }

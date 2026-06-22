@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ShoppingBag } from "lucide-react";
 import ModalPortal from "@/components/ModalPortal";
 import { useAdminOrders, useAdminProfiles } from "@/hooks/use-admin-data";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 
 interface CustomerAgg {
   id: string;
@@ -56,6 +58,20 @@ export default function AdminCustomers() {
   );
 
   const customerOrders = selected ? orders.filter((o) => o.email === selected.email) : [];
+
+  const deleteCustomer = async (id: string) => {
+    if (!confirm(`Delete customer ${selected?.name || id}? This will remove their profile.`)) return;
+    try {
+      const { error } = await supabase.from("profiles").delete().eq("id", id);
+      if (error) throw error;
+      // also remove any user_roles entries for this id
+      await supabase.from("user_roles").delete().eq("user_id", id);
+      toast({ title: "Deleted", description: selected?.email ?? id });
+      setSelected(null);
+    } catch (err: any) {
+      toast({ title: "Delete failed", description: err.message || String(err), variant: "destructive" });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -128,9 +144,14 @@ export default function AdminCustomers() {
             >
               <div className="flex items-center justify-between p-5 border-b border-border">
                 <h2 className="text-base font-bold text-foreground">{selected.name}</h2>
-                <button onClick={() => setSelected(null)} className="p-1.5 text-muted-foreground hover:text-foreground">
-                  <X size={16} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => deleteCustomer(selected.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded" title="Delete customer">
+                    <X size={16} />
+                  </button>
+                  <button onClick={() => setSelected(null)} className="p-1.5 text-muted-foreground hover:text-foreground">
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
               <div className="p-5 space-y-6">
                 <div className="grid grid-cols-3 gap-3">

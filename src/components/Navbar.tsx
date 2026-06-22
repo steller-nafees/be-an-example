@@ -49,7 +49,7 @@ export default function Navbar() {
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
   const { totalItems, setIsOpen } = useCart();
   const { count: wishCount } = useWishlist();
-  const { logo } = useLogo();
+  const { logo, settings } = useLogo();
   const { user, role } = useAuth();
   const accountHref = !user ? "/auth" : role === "admin" ? "/admin" : role === "affiliate" ? "/affiliate" : "/account";
   const location = useLocation();
@@ -114,10 +114,10 @@ export default function Navbar() {
         <div className="container mx-auto flex items-center justify-between h-16 md:h-20 px-6">
           <Link to="/" className="flex items-center gap-2">
             {logo ? (
-              <img src={logo} alt="Logo" className="h-8 md:h-10 object-contain" />
+              <img src={logo} alt={settings.brandName} className="h-8 md:h-10 object-contain" />
             ) : (
               <span className="text-lg md:text-xl font-black tracking-[0.2em] text-foreground uppercase">
-                BE AN EXAMPLE
+                {settings.brandName}
               </span>
             )}
           </Link>
@@ -224,9 +224,9 @@ export default function Navbar() {
             <div className="flex items-center justify-between h-16 px-6 border-b border-border">
               <Link to="/" className="flex items-center gap-2">
                 {logo ? (
-                  <img src={logo} alt="Logo" className="h-6 object-contain" />
+                  <img src={logo} alt={settings.brandName} className="h-6 object-contain" />
                 ) : (
-                  <span className="text-lg font-black tracking-[0.2em] uppercase">BE AN EXAMPLE</span>
+                  <span className="text-lg font-black tracking-[0.2em] uppercase">{settings.brandName}</span>
                 )}
               </Link>
               <button onClick={() => setMobileOpen(false)}>

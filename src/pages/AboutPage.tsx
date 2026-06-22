@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Award, Leaf, Target, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useBrandSettings } from "@/context/LogoContext";
 
 export default function AboutPage() {
+  const { settings } = useBrandSettings();
   const values = [
     {
       icon: Target,
@@ -29,10 +31,11 @@ export default function AboutPage() {
 
   const timeline = [
     {
-      year: "2020",
+      year: "2026",
       title: "The Beginning",
       description: "Founded with a vision to create a platform where quality products meet purposeful commerce."
     },
+    /*
     {
       year: "2021",
       title: "First Milestone",
@@ -57,7 +60,7 @@ export default function AboutPage() {
       year: "2025",
       title: "Future Vision",
       description: "Expanding our community and impact while maintaining uncompromising quality."
-    }
+    }*/
   ];
 
   return (
@@ -68,8 +71,19 @@ export default function AboutPage() {
           Be the One<br />Others Look Up To
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground mb-8">
-          We believe in the power of quality, community, and purpose. Since 2020, we've been on a mission 
-          to bring together exceptional products and exceptional people.
+          {settings.brandName} was created for those who choose growth over excuses, discipline over shortcuts, and purpose over trends.
+        </p>
+        <p className="text-lg md:text-xl text-muted-foreground mb-8">
+          We're more than a clothing brand. We're a community of people committed to becoming the best version of themselves—one decision, one habit, and one example at a time.
+        </p>
+        <p className="text-lg md:text-xl text-muted-foreground mb-8">
+          Every piece we create is designed with intention: clean, timeless, and built to represent a mindset. Because what you wear should reflect who you're becoming.
+        </p>
+        <p className="text-lg md:text-xl text-muted-foreground mb-8">
+          This is for the leaders, the builders, the dreamers, and the ones who keep showing up when nobody is watching.
+        </p>
+        <p className="text-lg md:text-xl text-muted-foreground mb-8">
+          Be the standard. Be the example.
         </p>
       </section>
 
@@ -78,9 +92,13 @@ export default function AboutPage() {
         <div className="mb-16">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">Our Mission</h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            To create a thriving marketplace where quality products, transparent business practices, and 
-            community-driven commerce empower individuals to achieve their best selves. We're not just selling 
-            products—we're building a movement of people who believe in excellence.
+            To create products that inspire growth, confidence, and self-respect.
+          </p>
+          <p className="text-lg text-muted-foreground leading-relaxed mt-4">
+            We believe that the small choices we make every day shape the person we become. That's why everything we create is designed to represent discipline, purpose, and the pursuit of excellence.
+          </p>
+          <p className="text-lg text-muted-foreground leading-relaxed mt-4">
+            {settings.brandName} - {settings.tagline}
           </p>
         </div>
 
@@ -133,31 +151,27 @@ export default function AboutPage() {
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-8">How We Source</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">Rigorous Curation</h3>
+              <h3 className="text-xl font-bold mb-4">Thoughtful Design</h3>
               <p className="text-muted-foreground mb-4">
-                Every product undergoes our 5-stage quality assessment process. We partner with only the 
-                most trusted manufacturers and artisans who share our commitment to excellence.
+                Every product undergoes our 5-stage quality assessment process. We partner with only the most trusted manufacturers and artisans who share our commitment to excellence.
               </p>
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-4">Ethical Practices</h3>
+              <h3 className="text-xl font-bold mb-4">Premium Production</h3>
               <p className="text-muted-foreground mb-4">
-                We ensure fair wages, safe working conditions, and transparent supply chains. Our partners 
-                meet international labor and environmental standards.
+                We partner with trusted print-on-demand fulfillment providers to ensure high-quality materials, reliable printing, and consistent craftsmanship across every order.
               </p>
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-4">Continuous Testing</h3>
+              <h3 className="text-xl font-bold mb-4">Made On Demand</h3>
               <p className="text-muted-foreground mb-4">
-                Products are tested in real-world conditions by our team and community members before they 
-                reach your hands.
+                Each item is produced specifically for you after your order is placed. This approach helps reduce overproduction and allows us to focus on quality over quantity.
               </p>
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-4">Customer Feedback</h3>
+              <h3 className="text-xl font-bold mb-4">Quality Standards</h3>
               <p className="text-muted-foreground mb-4">
-                Your reviews and feedback directly influence which products we stock, ensuring our catalog 
-                truly reflects community needs.
+                Before launching a product, we carefully review materials, print quality, fit, and overall presentation to ensure it meets the standards of the {settings.brandName} brand.
               </p>
             </div>
           </div>
@@ -165,65 +179,84 @@ export default function AboutPage() {
       </section>
 
       {/* Sustainability Section */}
+
       <section className="container mx-auto px-6 py-20 max-w-4xl">
-        <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-8">Our Commitment to Sustainability</h2>
+        <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-8">
+          Our Commitment
+        </h2>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
-            <h3 className="text-2xl font-bold mb-4">Environmental Impact</h3>
+            <h3 className="text-2xl font-bold mb-4">
+              Responsible Production
+            </h3>
             <ul className="space-y-3 text-muted-foreground">
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
-                <span>Carbon-neutral operations achieved in 2024</span>
+                <span>Made on demand to help reduce unnecessary waste and overproduction.</span>
               </li>
+
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
-                <span>100% recyclable packaging materials</span>
+                <span>Produced through trusted fulfillment partners known for consistent quality.</span>
               </li>
+
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
-                <span>1% of profits donated to environmental initiatives</span>
+                <span>Focused on creating timeless pieces rather than fast-moving trends.</span>
               </li>
+
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
-                <span>Regular supply chain audits for sustainability</span>
+                <span>Committed to making thoughtful improvements as our brand continues to grow.</span>
               </li>
             </ul>
           </div>
+
           <div>
-            <h3 className="text-2xl font-bold mb-4">Community Impact</h3>
+            <h3 className="text-2xl font-bold mb-4">
+              Community Impact
+            </h3>
+
             <ul className="space-y-3 text-muted-foreground">
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
-                <span>Support for 50+ artisan communities globally</span>
+                <span>Building a community centered around growth, discipline, and self-respect.</span>
               </li>
+
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
-                <span>Education programs for underprivileged youth</span>
+                <span>Creating products that inspire confidence and intentional living.</span>
               </li>
+
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
-                <span>Fair-trade certified partnerships</span>
+                <span>Listening to customer feedback to shape future collections.</span>
               </li>
+
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
-                <span>Annual transparency reports published</span>
+                <span>Encouraging people to lead by example in everyday life.</span>
               </li>
             </ul>
           </div>
+
+
         </div>
       </section>
+
 
       {/* CTA Section */}
       <section className="bg-primary text-primary-foreground py-20">
         <div className="container mx-auto px-6 max-w-4xl text-center">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">Join Our Community</h2>
           <p className="text-lg mb-8 opacity-90">
-            Become part of something bigger. Join our affiliate program and earn while sharing 
+            Become part of something bigger. Join our affiliate program and earn while sharing
             products you believe in.
           </p>
           <Link to="/affiliate/apply">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               variant="secondary"
               className="gap-2"
             >

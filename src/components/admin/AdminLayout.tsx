@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLogo } from "@/context/LogoContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
   Package,
@@ -35,7 +36,8 @@ const navItems = [
 
 export default function AdminLayout() {
   const location = useLocation();
-  const { logo } = useLogo();
+  const { logo, settings } = useLogo();
+  const { signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -85,10 +87,10 @@ export default function AdminLayout() {
         <div className="flex items-center justify-between h-14 px-4 border-b border-border">
           {!collapsed && (
             logo ? (
-              <img src={logo} alt="Logo" className="h-6 object-contain" />
+              <img src={logo} alt={settings.brandName} className="h-6 object-contain" />
             ) : (
               <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
-                BE AN EXAMPLE
+                {settings.brandName}
               </span>
             )
           )}
@@ -136,10 +138,10 @@ export default function AdminLayout() {
             >
               <div className="flex items-center justify-between h-14 px-4 border-b border-border">
                 {logo ? (
-                  <img src={logo} alt="Logo" className="h-6 object-contain" />
+                  <img src={logo} alt={settings.brandName} className="h-6 object-contain" />
                 ) : (
                   <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
-                    BE AN EXAMPLE
+                    {settings.brandName}
                   </span>
                 )}
                 <button
@@ -208,7 +210,7 @@ export default function AdminLayout() {
                   >
                     <div className="px-3 py-2.5 border-b border-border">
                       <p className="text-sm font-medium text-foreground">Admin User</p>
-                      <p className="text-xs text-muted-foreground">admin@beanexample.com</p>
+                      <p className="text-xs text-muted-foreground">{settings.adminEmail}</p>
                     </div>
                     <Link
                       to="/admin/settings"
@@ -218,13 +220,17 @@ export default function AdminLayout() {
                       <Settings size={14} />
                       Settings
                     </Link>
-                    <Link
-                      to="/"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        signOut();
+                      }}
+                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     >
                       <LogOut size={14} />
                       Sign Out
-                    </Link>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -3,6 +3,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContai
 import { useAdminOrders, computeMetrics, revenueByDay } from "@/hooks/use-admin-data";
 import { useProducts } from "@/hooks/use-products";
 import { useMemo } from "react";
+import { useOrderItemsWithCosts, computeProfitabilityMetrics } from "@/lib/admin-data";
 
 const ChartTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -21,6 +22,8 @@ export default function AdminAnalytics() {
   const { data: products = [] } = useProducts();
   const metrics = computeMetrics(orders);
   const revenueData = revenueByDay(orders, 30);
+  const { data: orderItems = [] } = useOrderItemsWithCosts();
+  const profitability = computeProfitabilityMetrics(orderItems);
 
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {};
@@ -84,6 +87,28 @@ export default function AdminAnalytics() {
                 <p className="text-2xl font-bold text-foreground mt-1">{item.value}</p>
               </div>
             ))}
+
+                  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-background border border-border rounded-lg p-5 lg:col-span-2">
+                    <h2 className="text-sm font-semibold text-foreground/70 mb-6">Profitability & Margins</h2>
+                    <div className="grid sm:grid-cols-4 gap-5">
+                      {[
+                        { label: "Total Revenue", value: `$${profitability.totalRevenue.toFixed(2)}` },
+                        { label: "Total Cost", value: `$${profitability.totalCost.toFixed(2)}` },
+                        { label: "Gross Profit", value: `$${profitability.grossProfit.toFixed(2)}` },
+                        { label: "Margin %", value: `${profitability.marginPercentage.toFixed(2)}%` },
+                      ].map((item) => (
+                        <div key={item.label}>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</p>
+                          <p className="text-2xl font-bold text-foreground mt-1">{item.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <p className="text-xs text-muted-foreground">
+                        Cost data tracked for <span className="font-semibold text-foreground">{profitability.itemsWithCost}</span> of <span className="font-semibold text-foreground">{profitability.itemsWithCost + profitability.itemsWithoutCost}</span> order items ({profitability.coveragePercentage}% coverage)
+                      </p>
+                    </div>
+                  </motion.div>
           </div>
         </motion.div>
       </div>

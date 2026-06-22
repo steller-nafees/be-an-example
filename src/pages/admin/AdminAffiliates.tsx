@@ -15,6 +15,7 @@ import {
   SheetDescription,
   SheetFooter,
 } from "@/components/ui/sheet";
+import { X as XIcon, Trash2 } from "lucide-react";
 
 const statusMap: Record<string, string> = {
   pending: "pending",
@@ -111,6 +112,26 @@ export default function AdminAffiliates() {
     setLoadingDetails(false);
   };
 
+  const removeAffiliate = async (id: string) => {
+    if (!confirm("Remove affiliate? This will revoke their affiliate status and delete their affiliate record.")) return;
+    setUpdatingId(id);
+    try {
+      // delete affiliate row
+      const { error } = await supabase.from("affiliates").delete().eq("id", id);
+      if (error) throw error;
+      // revoke affiliate role
+      const aff = affiliates.find((a) => a.id === id);
+      if (aff?.user_id) {
+        await supabase.from("user_roles").delete().match({ user_id: aff.user_id, role: "affiliate" });
+      }
+      toast({ title: "Affiliate removed" });
+      qc.invalidateQueries({ queryKey: ["admin-affiliates"] });
+    } catch (err: any) {
+      toast({ title: "Remove failed", description: err.message || String(err), variant: "destructive" });
+    }
+    setUpdatingId(null);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -189,6 +210,7 @@ export default function AdminAffiliates() {
                       {aff.status === "rejected" && (
                         <button onClick={() => updateStatus(aff.id, "approved")} disabled={updatingId === aff.id} className="px-2.5 py-1 text-xs font-medium border border-border rounded">Re-approve</button>
                       )}
+                      <button onClick={(e) => { e.stopPropagation(); removeAffiliate(aff.id); }} disabled={updatingId === aff.id} className="px-2.5 py-1 text-xs font-medium text-destructive border border-transparent rounded">Remove</button>
                     </div>
                   </td>
                 </tr>

@@ -110,3 +110,59 @@ export function revenueByDay(orders: AdminOrderLite[], days = 30) {
   });
   return Object.entries(buckets).map(([date, revenue]) => ({ date, revenue }));
 }
+
+export interface OrderItemWithCost {
+  id: string;
+  order_id: string;
+  price: number;
+  cost_snapshot: number | null;
+  quantity: number;
+}
+
+export const useOrderItemsWithCosts = () => {
+  return useQuery({
+    queryKey: ["order-items-with-costs"],
+    queryFn: async (): Promise<OrderItemWithCost[]> => {
+      const { data } = await supabase
+        .from("order_items")
+        .select("id,order_id,price,cost_snapshot,quantity")
+        .order("id", { ascending: false });
+      return (data as OrderItemWithCost[]) ?? [];
+    },
+  });
+};
+
+export function computeProfitabilityMetrics(items: OrderItemWithCost[]) {
+  let totalCost = 0;
+  let totalRevenue = 0;
+  let itemsWithCost = 0;
+  let itemsWithoutCost = 0;
+
+  items.forEach((item) => {
+    const lineRevenue = item.price * item.quantity;
+    totalRevenue += lineRevenue;
+
+    if (item.cost_snapshot !== null) {
+      const lineCost = item.cost_snapshot * item.quantity;
+      totalCost += lineCost;
+      itemsWithCost++;
+    } else {
+      itemsWithoutCost++;
+    }
+  });
+
+  const grossProfit = totalRevenue - totalCost;
+  const marginPercentage = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
+  const avgMarginPerItem = itemsWithCost > 0 ? marginPercentage : 0;
+
+  return {
+    totalRevenue: Math.round(totalRevenue * 100) / 100,
+    totalCost: Math.round(totalCost * 100) / 100,
+    grossProfit: Math.round(grossProfit * 100) / 100,
+    marginPercentage: Math.round(marginPercentage * 100) / 100,
+    avgMarginPerItem: Math.round(avgMarginPerItem * 100) / 100,
+    itemsWithCost,
+    itemsWithoutCost,
+    coveragePercentage: items.length > 0 ? Math.round((itemsWithCost / items.length) * 100) : 0,
+  };
+}

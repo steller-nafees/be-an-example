@@ -11,9 +11,11 @@ import {
 } from "@/components/ui/accordion";
 import { Mail, MapPin, Clock, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useBrandSettings } from "@/context/LogoContext";
 
 export default function ContactPage() {
   const { toast } = useToast();
+  const { settings } = useBrandSettings();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -53,7 +55,7 @@ export default function ContactPage() {
   const faqs = [
     {
       question: "How long does shipping take?",
-      answer: "Standard shipping takes 5-7 business days within the continental US. Express shipping (2-3 business days) and international shipping options are also available at checkout. You'll receive a tracking number once your order ships."
+      answer: "Standard shipping takes 5-7 business days within the continental US. All orders ship free and include tracking information once your order ships."
     },
     {
       question: "What's your return policy?",
@@ -77,7 +79,7 @@ export default function ContactPage() {
     },
     {
       question: "How do I contact customer support?",
-      answer: "You can reach our support team via email at support@beanexample.com, or use the contact form on this page. We typically respond within 24 hours during business days."
+      answer: `You can reach our support team via email at ${settings.supportEmail}, or use the contact form on this page. We typically respond within 24 hours during business days.`
     }
   ];
 
@@ -172,9 +174,14 @@ export default function ContactPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <a href="mailto:support@beanexample.com" className="text-primary hover:underline">
-                  support@beanexample.com
+                <a href={`mailto:${settings.supportEmail}`} className="text-primary hover:underline">
+                  {settings.supportEmail}
                 </a>
+                {settings.phone && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {settings.phone}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground mt-2">
                   We respond within 24 hours
                 </p>
@@ -189,10 +196,10 @@ export default function ContactPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <p><span className="font-medium">Mon - Fri:</span> 9:00 AM - 6:00 PM EST</p>
-                <p><span className="font-medium">Sat - Sun:</span> 10:00 AM - 4:00 PM EST</p>
+                <p>{settings.weekdayHours}</p>
+                <p>{settings.weekendHours}</p>
                 <p className="text-muted-foreground">
-                  Closed on major holidays
+                  {settings.closedNote}
                 </p>
               </CardContent>
             </Card>
@@ -205,10 +212,10 @@ export default function ContactPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-sm">
-                <p>Be An Example Inc.</p>
+                <p>{settings.companyName}</p>
                 <p className="text-muted-foreground mt-2">
-                  Headquarters in major US city<br />
-                  Global operations across 50+ countries
+                  {settings.addressLine1}<br />
+                  {settings.addressLine2}
                 </p>
               </CardContent>
             </Card>

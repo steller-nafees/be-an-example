@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ShoppingBag, Heart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useProductColors, useProductVariants } from "@/hooks/use-variants";
 import { Link } from "react-router-dom";
 import type { Product } from "@/lib/products";
 
@@ -13,7 +14,13 @@ interface Props {
 export default function ProductCard({ product, index = 0 }: Props) {
   const { addItem } = useCart();
   const { toggle, isWishlisted } = useWishlist();
+  const { data: colors = [] } = useProductColors(product.id);
+  const { data: variants = [] } = useProductVariants(product.id);
   const liked = isWishlisted(product.id);
+  const defaultColor = colors[0];
+  const defaultVariant =
+    variants.find((variant) => variant.color_id === defaultColor?.id && variant.stock > 0) ??
+    variants.find((variant) => variant.stock > 0);
 
   return (
     <motion.div
@@ -25,11 +32,19 @@ export default function ProductCard({ product, index = 0 }: Props) {
     >
       <Link to={`/product/${product.id}`} className="block relative overflow-hidden bg-muted mb-4 aspect-[3/4]">
         <img
-          src={product.image}
+          src={product.archive_image || product.image}
           alt={product.name}
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
+        {product.archive_hover_image && (
+          <img
+            src={product.archive_hover_image}
+            alt={`${product.name} hover`}
+            loading="lazy"
+            className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+          />
+        )}
 
         {/* Wishlist */}
         <button
@@ -60,10 +75,12 @@ export default function ProductCard({ product, index = 0 }: Props) {
             e.preventDefault();
             addItem({
               id: product.id,
+              variantId: defaultVariant?.id,
+              printfulSyncVariantId: defaultVariant?.printful_sync_variant_id ?? null,
               name: product.name,
-              price: product.price,
-              size: product.sizes[2] || product.sizes[0],
-              color: product.colors?.[0]?.name ?? "",
+              price: defaultVariant?.price ?? product.price,
+              size: defaultVariant?.size || product.sizes[2] || product.sizes[0],
+              color: defaultColor?.name ?? product.colors?.[0]?.name ?? "",
               image: product.image,
             });
           }}

@@ -8,13 +8,13 @@ type Ctx = { totalSpend: number; tier: MemberTier };
 
 const TIERS: { name: MemberTier; min: number; perks: string[] }[] = [
   { name: "Bronze", min: 0, perks: ["Free standard shipping", "Birthday gift"] },
-  { name: "Silver", min: 500, perks: ["Free express shipping", "Early access to drops"] },
+  { name: "Silver", min: 500, perks: ["Free shipping credit", "Early access to drops"] },
   { name: "Gold", min: 1500, perks: ["Members-only collection", "Priority support", "Free returns"] },
   { name: "Elite", min: 5000, perks: ["Concierge styling", "Lifetime free shipping", "Exclusive events"] },
 ];
 
 const REWARDS = [
-  { icon: Truck, title: "Free express shipping", cost: 500, desc: "On your next order." },
+  { icon: Truck, title: "Free shipping credit", cost: 500, desc: "On your next order." },
   { icon: Gift, title: "Mystery member gift", cost: 1000, desc: "A signed piece from the archive." },
   { icon: Sparkles, title: "$50 credit", cost: 2000, desc: "Apply at checkout." },
   { icon: Crown, title: "Private styling session", cost: 5000, desc: "30 minutes with our team." },

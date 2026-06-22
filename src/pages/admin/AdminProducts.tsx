@@ -13,6 +13,8 @@ import {
   Upload,
   Loader2,
   Trash,
+  RefreshCw,
+  PackagePlus,
 } from "lucide-react";
 import {
   useProducts,
@@ -32,9 +34,43 @@ import {
 } from "@/hooks/use-variants";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const CATEGORIES = ["hoodies", "tshirts", "accessories"];
+
+interface PrintfulListProduct {
+  id: number;
+  external_id?: string | null;
+  name: string;
+  thumbnail_url?: string | null;
+  variants?: number;
+  synced?: number;
+}
+
+interface PrintfulVariant {
+  id: number;
+  external_id?: string | null;
+  name: string;
+  retail_price?: string | number | null;
+  cost?: string | number | null;
+  sku?: string | null;
+  product?: {
+    image?: string | null;
+    variant_id?: number;
+    color?: string | null;
+    color_code?: string | null;
+    size?: string | null;
+  } | null;
+  files?: { preview_url?: string | null; thumbnail_url?: string | null }[];
+}
+
+interface PrintfulProductDetail {
+  sync_product: PrintfulListProduct;
+  sync_variants: PrintfulVariant[];
+}
+
+const generateDraftId = () => `draft-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 const emptyDraft = (): ProductInput => ({
   id: `p-${Date.now().toString(36)}`,
@@ -42,6 +78,8 @@ const emptyDraft = (): ProductInput => ({
   price: 0,
   image: "",
   images: [],
+  archive_image: null,
+  archive_hover_image: null,
   category: "hoodies",
   sizes: [],
   colors: [],
@@ -51,7 +89,36 @@ const emptyDraft = (): ProductInput => ({
   stock: 0,
   published: true,
   collection_id: null,
+  printful_product_id: null,
 });
+
+const normalizeSize = (variant: PrintfulVariant) => {
+  const direct = variant.product?.size?.trim();
+  if (direct) return direct.toUpperCase();
+  const parts = variant.name.split(/[/-]/).map((part) => part.trim()).filter(Boolean);
+  const guessed = [...parts].reverse().find((part) => ALL_SIZES.includes(part.toUpperCase()));
+  return guessed?.toUpperCase() || "OS";
+};
+
+const normalizeColor = (variant: PrintfulVariant) => {
+  const direct = variant.product?.color?.trim();
+  if (direct) return direct;
+  const parts = variant.name.split(/[/-]/).map((part) => part.trim()).filter(Boolean);
+  return parts.length > 1 ? parts[parts.length - 2] : "Default";
+};
+
+const imageForVariant = (variant: PrintfulVariant) =>
+  variant.product?.image ||
+  variant.files?.find((file) => file.preview_url)?.preview_url ||
+  variant.files?.find((file) => file.thumbnail_url)?.thumbnail_url ||
+  "";
+
+const inferCategory = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes("hoodie") || lower.includes("sweatshirt")) return "hoodies";
+  if (lower.includes("tee") || lower.includes("shirt")) return "tshirts";
+  return "accessories";
+};
 
 export default function AdminProducts() {
   const { data: products = [], isLoading, error } = useProducts();
@@ -64,8 +131,14 @@ export default function AdminProducts() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<ProductInput | null>(null);
   const [colorsDraft, setColorsDraft] = useState<SaveColorInput[]>([]);
+  const [printfulOpen, setPrintfulOpen] = useState(false);
+  const [printfulProducts, setPrintfulProducts] = useState<PrintfulListProduct[]>([]);
+  const [printfulLoading, setPrintfulLoading] = useState(false);
+  const [importingId, setImportingId] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const archiveImageRef = useRef<HTMLInputElement>(null);
+  const archiveHoverImageRef = useRef<HTMLInputElement>(null);
 
   const filtered = useMemo(
     () => products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase())),
@@ -76,13 +149,11 @@ export default function AdminProducts() {
   const editingIsExisting = !!(editing && products.find((p) => p.id === editing.id));
   const { data: existingColors } = useProductColors(editingIsExisting ? editing!.id : undefined);
   const { data: existingVariants } = useProductVariants(editingIsExisting ? editing!.id : undefined);
+  const existingVariantsLoaded = !editingIsExisting || (existingColors !== undefined && existingVariants !== undefined);
 
   useEffect(() => {
     if (!editing) return;
-    if (!editingIsExisting) {
-      setColorsDraft([]);
-      return;
-    }
+    if (!editingIsExisting) return;
     if (existingColors) {
       setColorsDraft(
         existingColors.map((c, i) => ({
@@ -98,8 +169,10 @@ export default function AdminProducts() {
               size: v.size,
               stock: v.stock,
               sku: v.sku,
+              printful_sync_variant_id: v.printful_sync_variant_id,
               price: v.price,
-            })),
+             base_cost: v.base_cost,
+           })),
         }))
       );
     }
@@ -111,11 +184,105 @@ export default function AdminProducts() {
   };
   const openEdit = (p: Product) => {
     setColorsDraft([]);
-    setEditing({ ...p });
+    setEditing({ ...p, published: p.published ?? true });
   };
   const close = () => {
     setEditing(null);
     setColorsDraft([]);
+  };
+
+  const loadPrintfulProducts = async () => {
+    setPrintfulLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("printful-products", {
+        body: {},
+      });
+      if (error) throw error;
+      const list = Array.isArray(data?.products) ? data.products : [];
+      setPrintfulProducts(list);
+      setPrintfulOpen(true);
+    } catch (err: any) {
+      toast({
+        title: "Printful load failed",
+        description: err.message || "Deploy the printful-products function and confirm your token.",
+        variant: "destructive",
+      });
+    } finally {
+      setPrintfulLoading(false);
+    }
+  };
+
+  const importPrintfulProduct = async (productId: number) => {
+    setImportingId(productId);
+    try {
+      const { data, error } = await supabase.functions.invoke("printful-products", {
+        body: { productId },
+      });
+      if (error) throw error;
+
+      const detail = data?.product as PrintfulProductDetail | undefined;
+      if (!detail?.sync_product) throw new Error("Printful did not return product details.");
+
+      const syncProduct = detail.sync_product;
+      const syncVariants = detail.sync_variants || [];
+      const fallbackImage = syncProduct.thumbnail_url || "";
+      const variantImages = syncVariants.map(imageForVariant).filter(Boolean);
+      const images = Array.from(new Set([fallbackImage, ...variantImages].filter(Boolean)));
+      const firstPrice =
+        syncVariants
+          .map((variant) => Number(variant.retail_price))
+          .find((price) => Number.isFinite(price) && price > 0) || 0;
+
+      const groups = new Map<string, SaveColorInput>();
+      syncVariants.forEach((variant) => {
+        const colorName = normalizeColor(variant);
+        const image = imageForVariant(variant) || fallbackImage;
+        const existing = groups.get(colorName) ?? {
+          id: generateDraftId(),
+          name: colorName,
+          value: variant.product?.color_code || "#000000",
+          images: image ? [image] : [],
+          position: groups.size,
+          variants: [],
+        };
+        if (image && !existing.images.includes(image)) existing.images.push(image);
+        existing.variants.push({
+          id: generateDraftId(),
+          size: normalizeSize(variant),
+          stock: 999,
+          sku: variant.sku ?? null,
+          printful_sync_variant_id: variant.id,
+          price: Number.isFinite(Number(variant.retail_price)) ? Number(variant.retail_price) : null,
+         base_cost: Number.isFinite(Number(variant.cost)) ? Number(variant.cost) : null,
+       });
+        groups.set(colorName, existing);
+      });
+
+      setColorsDraft(Array.from(groups.values()));
+      setEditing({
+        ...emptyDraft(),
+        id: `pf-${syncProduct.id}`,
+        name: syncProduct.name,
+        price: firstPrice,
+        image: images[0] || "",
+        images,
+        archive_image: null,
+        archive_hover_image: null,
+        category: inferCategory(syncProduct.name),
+        description: "",
+        printful_product_id: String(syncProduct.id),
+        published: false,
+      });
+      setPrintfulOpen(false);
+      toast({
+        title: "Printful product imported",
+        description: "Review the local title, description, price, and visibility before saving.",
+      });
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setImportingId(null);
+    }
   };
 
   const handleFiles = async (files: FileList | null) => {
@@ -127,6 +294,23 @@ export default function AdminProducts() {
         d ? { ...d, images: [...d.images, ...urls], image: d.image || urls[0] } : d
       );
       toast({ title: "Images uploaded", description: `${urls.length} file(s) added.` });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleArchiveUpload = async (
+    field: 'archive_image' | 'archive_hover_image',
+    files: FileList | null
+  ) => {
+    if (!files || !editing) return;
+    setUploading(true);
+    try {
+      const [url] = await Promise.all(Array.from(files).slice(0, 1).map(uploadProductImage));
+      setEditing((d) => (d ? { ...d, [field]: url } : d));
+      toast({ title: "Archive image uploaded", description: "Saved for product archive display." });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
@@ -147,13 +331,15 @@ export default function AdminProducts() {
     if (!editing) return;
     if (!editing.name.trim())
       return toast({ title: "Name is required", variant: "destructive" });
+    if (!existingVariantsLoaded)
+      return toast({ title: "Still loading variants", description: "Please try saving again in a moment.", variant: "destructive" });
     try {
       // Mirror variant data onto legacy product columns so cards/lists still render
       const aggregatedColors = colorsDraft.length
         ? colorsDraft.map((c) => ({ name: c.name, value: c.value }))
         : editing.colors;
       const aggregatedSizes = colorsDraft.length
-        ? Array.from(new Set(colorsDraft.flatMap((c) => c.variants.map((v) => v.size))))
+        ? Array.from(new Set(colorsDraft.flatMap((c) => c.variants.map((v) => v.size).filter(Boolean))))
         : editing.sizes;
       const cover = editing.image || colorsDraft.find((c) => c.images[0])?.images[0] || "";
       const aggregatedImages = editing.images.length
@@ -163,6 +349,7 @@ export default function AdminProducts() {
 
       await upsert.mutateAsync({
         ...editing,
+        published: editing.published ?? true,
         colors: aggregatedColors,
         sizes: aggregatedSizes,
         image: cover,
@@ -170,7 +357,7 @@ export default function AdminProducts() {
         stock: aggregatedStock,
       });
 
-      if (colorsDraft.length) {
+      if (colorsDraft.length || editingIsExisting) {
         await saveVariants.mutateAsync({ productId: editing.id, colors: colorsDraft });
       }
 
@@ -200,12 +387,22 @@ export default function AdminProducts() {
             {isLoading ? "Loading…" : `${products.length} products`}
           </p>
         </div>
-        <button
-          onClick={openAdd}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background text-sm font-semibold rounded-md hover:bg-foreground/90"
-        >
-          <Plus size={16} /> Add Product
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={loadPrintfulProducts}
+            disabled={printfulLoading}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-border text-sm font-semibold rounded-md hover:border-foreground/40 disabled:opacity-50"
+          >
+            {printfulLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            Printful
+          </button>
+          <button
+            onClick={openAdd}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background text-sm font-semibold rounded-md hover:bg-foreground/90"
+          >
+            <Plus size={16} /> Add Product
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -214,6 +411,63 @@ export default function AdminProducts() {
           <code>supabase/setup-collections-variants.sql</code> in your Supabase SQL editor.
         </div>
       )}
+
+      <ModalPortal><AnimatePresence>
+        {printfulOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setPrintfulOpen(false)} className="fixed inset-0 bg-foreground/30 z-50" />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="w-full md:w-[760px] max-h-[85vh] bg-background border border-border rounded-lg overflow-hidden shadow-xl pointer-events-auto"
+              >
+                <div className="flex items-center justify-between p-5 border-b border-border">
+                  <div>
+                    <h2 className="text-base font-bold">Printful Products</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Import fulfillment mappings, then edit your local store details before saving.
+                    </p>
+                  </div>
+                  <button onClick={() => setPrintfulOpen(false)} className="p-1.5 text-muted-foreground hover:text-foreground"><X size={16} /></button>
+                </div>
+                <div className="max-h-[65vh] overflow-y-auto p-5">
+                  {printfulProducts.length === 0 ? (
+                    <div className="py-16 text-center text-sm text-muted-foreground">No Printful products found.</div>
+                  ) : (
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {printfulProducts.map((product) => (
+                        <div key={product.id} className="flex gap-3 border border-border rounded-lg p-3 bg-background">
+                          <div className="w-16 h-16 rounded bg-muted overflow-hidden flex-shrink-0">
+                            {product.thumbnail_url && <img src={product.thumbnail_url} alt={product.name} className="w-full h-full object-cover" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold truncate">{product.name}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {product.variants ?? 0} variants · {product.synced ?? 0} synced
+                            </p>
+                            <p className="text-[10px] text-muted-foreground mt-1">Printful #{product.id}</p>
+                          </div>
+                          <button
+                            onClick={() => importPrintfulProduct(product.id)}
+                            disabled={importingId === product.id}
+                            className="self-center h-9 px-3 inline-flex items-center gap-1.5 bg-foreground text-background rounded-md text-xs font-semibold disabled:opacity-50"
+                          >
+                            {importingId === product.id ? <Loader2 size={13} className="animate-spin" /> : <PackagePlus size={13} />}
+                            Add
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence></ModalPortal>
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -275,10 +529,10 @@ export default function AdminProducts() {
                       <span className={`text-sm font-medium ${product.stock <= 5 ? "text-amber-600" : "text-foreground/70"}`}>{product.stock}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={product.published === false ? "draft" : product.stock > 0 ? "published" : "draft"} />
+                      <StatusBadge status={product.published === false ? "draft" : "published"} />
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openEdit(product)} className="p-1.5 text-muted-foreground hover:text-foreground">
                           <Pencil size={14} />
                         </button>
@@ -308,7 +562,7 @@ export default function AdminProducts() {
             >
               <div className="relative aspect-square overflow-hidden bg-muted">
                 {product.image && <img src={product.image} alt={product.name} className="w-full h-full object-cover" />}
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 flex gap-1">
                   <button onClick={() => openEdit(product)} className="p-1.5 bg-background/90 rounded"><Pencil size={12} /></button>
                   <button onClick={() => del(product)} className="p-1.5 bg-background/90 rounded text-red-500"><Trash2 size={12} /></button>
                 </div>
@@ -367,7 +621,7 @@ export default function AdminProducts() {
                         {editing.image === url && (
                           <span className="absolute top-1 left-1 text-[9px] bg-foreground text-background px-1 rounded">Cover</span>
                         )}
-                        <div className="absolute inset-0 bg-foreground/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center gap-1">
+                        <div className="absolute inset-0 flex items-center justify-center gap-1 bg-transparent">
                           {editing.image !== url && (
                             <button onClick={() => setEditing((d) => (d ? { ...d, image: url } : d))} className="text-[10px] bg-background px-2 py-0.5 rounded">Set cover</button>
                           )}
@@ -388,6 +642,63 @@ export default function AdminProducts() {
                     ))}
                   </div>
                 )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <input ref={archiveImageRef} type="file" accept="image/*" hidden onChange={(e) => handleArchiveUpload('archive_image', e.target.files)} />
+                  <input ref={archiveHoverImageRef} type="file" accept="image/*" hidden onChange={(e) => handleArchiveUpload('archive_hover_image', e.target.files)} />
+
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Archive card image</label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => archiveImageRef.current?.click()}
+                        className="px-3 py-2 border border-border rounded-md text-sm hover:border-foreground/40"
+                      >
+                        {editing.archive_image ? "Replace image" : "Upload image"}
+                      </button>
+                      {editing.archive_image && (
+                        <button
+                          type="button"
+                          onClick={() => setEditing((d) => (d ? { ...d, archive_image: null } : d))}
+                          className="px-3 py-2 border border-border rounded-md text-sm text-red-500 hover:bg-red-50"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    {editing.archive_image && (
+                      <img src={editing.archive_image} alt="Archive image" className="mt-2 w-full h-32 object-cover rounded-md border border-border" />
+                    )}
+                    <p className="text-[11px] text-muted-foreground mt-1">Used for archive/product grid cards.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Archive hover image</label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => archiveHoverImageRef.current?.click()}
+                        className="px-3 py-2 border border-border rounded-md text-sm hover:border-foreground/40"
+                      >
+                        {editing.archive_hover_image ? "Replace hover" : "Upload hover"}
+                      </button>
+                      {editing.archive_hover_image && (
+                        <button
+                          type="button"
+                          onClick={() => setEditing((d) => (d ? { ...d, archive_hover_image: null } : d))}
+                          className="px-3 py-2 border border-border rounded-md text-sm text-red-500 hover:bg-red-50"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    {editing.archive_hover_image && (
+                      <img src={editing.archive_hover_image} alt="Archive hover image" className="mt-2 w-full h-32 object-cover rounded-md border border-border" />
+                    )}
+                    <p className="text-[11px] text-muted-foreground mt-1">Optional hover image for product cards.</p>
+                  </div>
+                </div>
 
                 <Field label="Product name">
                   <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className={inputCls} placeholder="e.g. Noir Hoodie" />
@@ -447,7 +758,7 @@ export default function AdminProducts() {
                       onClick={() =>
                         setColorsDraft((d) => [
                           ...d,
-                          { name: "", value: "#000000", images: [], position: d.length, variants: [] },
+                          { id: generateDraftId(), name: "", value: "#000000", images: [], position: d.length, variants: [] },
                         ])
                       }
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-border rounded-md hover:border-foreground/40"
@@ -465,7 +776,7 @@ export default function AdminProducts() {
                   <div className="space-y-3">
                     {colorsDraft.map((color, ci) => (
                       <ColorBlock
-                        key={ci}
+                        key={color.id ?? ci}
                         color={color}
                         onChange={(next) =>
                           setColorsDraft((d) => d.map((c, i) => (i === ci ? next : c)))
@@ -489,7 +800,7 @@ export default function AdminProducts() {
                 <button onClick={close} className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground">Cancel</button>
                 <button
                   onClick={save}
-                  disabled={upsert.isPending || saveVariants.isPending}
+                  disabled={upsert.isPending || saveVariants.isPending || !existingVariantsLoaded}
                   className="px-6 py-2 bg-foreground text-background text-sm font-semibold rounded-md hover:bg-foreground/90 disabled:opacity-50 inline-flex items-center gap-2"
                 >
                   {(upsert.isPending || saveVariants.isPending) && <Loader2 size={14} className="animate-spin" />}
@@ -537,7 +848,10 @@ function ColorBlock({
     if (exists) {
       onChange({ ...color, variants: color.variants.filter((v) => v.size !== size) });
     } else {
-      onChange({ ...color, variants: [...color.variants, { size, stock: 0 }] });
+      onChange({
+        ...color,
+        variants: [...color.variants, { id: generateDraftId(), size, stock: 0 }],
+      });
     }
   };
 
@@ -545,6 +859,15 @@ function ColorBlock({
     onChange({
       ...color,
       variants: color.variants.map((v) => (v.size === size ? { ...v, stock } : v)),
+    });
+  };
+
+  const setPrintfulSyncVariantId = (size: string, id: number | null) => {
+    onChange({
+      ...color,
+      variants: color.variants.map((v) =>
+        v.size === size ? { ...v, printful_sync_variant_id: id } : v
+      ),
     });
   };
 
@@ -618,14 +941,31 @@ function ColorBlock({
                   {size}
                 </button>
                 {active && (
-                  <input
-                    type="number"
-                    min={0}
-                    value={v!.stock}
-                    onChange={(e) => setStock(size, parseInt(e.target.value) || 0)}
-                    className="h-9 w-16 bg-background border border-l-0 border-border rounded-r-md px-2 text-xs focus:outline-none focus:border-foreground/30"
-                    placeholder="Qty"
-                  />
+                  <div className="flex border-y border-r border-border rounded-r-md overflow-hidden bg-background">
+                    <input
+                      type="number"
+                      min={0}
+                      value={v!.stock}
+                      onChange={(e) => setStock(size, parseInt(e.target.value) || 0)}
+                      className="h-9 w-16 bg-background border-r border-border px-2 text-xs focus:outline-none focus:border-foreground/30"
+                      placeholder="Qty"
+                      title="Stock"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      value={v!.printful_sync_variant_id ?? ""}
+                      onChange={(e) =>
+                        setPrintfulSyncVariantId(
+                          size,
+                          e.target.value ? parseInt(e.target.value, 10) : null
+                        )
+                      }
+                      className="h-9 w-28 bg-background px-2 text-xs focus:outline-none focus:border-foreground/30"
+                      placeholder="Printful ID"
+                      title="Printful sync variant ID"
+                    />
+                  </div>
                 )}
               </div>
             );

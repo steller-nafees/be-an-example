@@ -12,6 +12,8 @@ export interface Product {
   price: number
   image: string
   images: string[]
+  archive_image?: string | null
+  archive_hover_image?: string | null
   category: string
   sizes: string[]
   colors: ProductColor[]
@@ -21,10 +23,25 @@ export interface Product {
   stock: number
   published?: boolean
   collection_id?: string | null
+  printful_product_id?: string | null
   created_at?: string
+  updated_at?: string
 }
 
 const TABLE = 'products'
+
+const normalizeProduct = (product: Product): Product => ({
+  ...product,
+  price: Number(product.price) || 0,
+  images: product.images || [],
+  archive_image: product.archive_image ?? null,
+  archive_hover_image: product.archive_hover_image ?? null,
+  sizes: product.sizes || [],
+  colors: product.colors || [],
+  rating: Number(product.rating) || 0,
+  reviews: Number(product.reviews) || 0,
+  stock: Number(product.stock) || 0,
+})
 
 export const useProducts = () => {
   return useQuery({
@@ -35,7 +52,7 @@ export const useProducts = () => {
         .select('*')
         .order('created_at', { ascending: false })
       if (error) throw error
-      return (data || []) as Product[]
+      return ((data || []) as Product[]).map(normalizeProduct)
     },
   })
 }
@@ -51,13 +68,33 @@ export const useProduct = (id: string | undefined) => {
         .eq('id', id)
         .maybeSingle()
       if (error) throw error
-      return data as Product | null
+      return data ? normalizeProduct(data as Product) : null
     },
     enabled: !!id,
   })
 }
 
-export type ProductInput = Omit<Product, 'created_at'>
+export type ProductInput = Omit<Product, 'created_at' | 'updated_at'>
+
+const productPayload = (p: ProductInput) => ({
+  id: p.id,
+  name: p.name,
+  price: p.price,
+  image: p.image,
+  images: p.images,
+  archive_image: p.archive_image ?? null,
+  archive_hover_image: p.archive_hover_image ?? null,
+  category: p.category,
+  sizes: p.sizes,
+  colors: p.colors,
+  description: p.description,
+  rating: p.rating,
+  reviews: p.reviews,
+  stock: p.stock,
+  published: p.published ?? true,
+  collection_id: p.collection_id ?? null,
+  printful_product_id: p.printful_product_id ?? null,
+})
 
 export const useUpsertProduct = () => {
   const qc = useQueryClient()
@@ -65,15 +102,16 @@ export const useUpsertProduct = () => {
     mutationFn: async (p: ProductInput) => {
       const { data, error } = await supabase
         .from(TABLE)
-        .upsert(p, { onConflict: 'id' })
+        .upsert(productPayload(p), { onConflict: 'id' })
         .select()
         .single()
       if (error) throw error
-      return data as Product
+      return normalizeProduct(data as Product)
     },
-    onSuccess: () => {
+    onSuccess: (product) => {
+      qc.setQueryData(['product', product.id], product)
       qc.invalidateQueries({ queryKey: ['products'] })
-      qc.invalidateQueries({ queryKey: ['product'] })
+      qc.invalidateQueries({ queryKey: ['product', product.id] })
     },
   })
 }
@@ -86,7 +124,10 @@ export const useDeleteProduct = () => {
       if (error) throw error
       return id
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
+    onSuccess: (_d, id) => {
+      qc.removeQueries({ queryKey: ['product', id] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+    },
   })
 }
 

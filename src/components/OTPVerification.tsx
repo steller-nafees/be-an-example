@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { useBrandSettings } from "@/context/LogoContext";
 
 interface OTPVerificationProps {
   email: string;
@@ -22,6 +23,7 @@ function maskEmail(email: string) {
 type Status = "idle" | "loading" | "error" | "success";
 
 export default function OTPVerification({ email, onBack, onSuccess }: OTPVerificationProps) {
+  const { settings } = useBrandSettings();
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [status, setStatus] = useState<Status>("idle");
   const [timer, setTimer] = useState(RESEND_SECONDS);
@@ -139,7 +141,7 @@ export default function OTPVerification({ email, onBack, onSuccess }: OTPVerific
             transition={{ delay: 0.5 }}
             className="text-sm text-muted-foreground"
           >
-            Welcome to BE AN EXAMPLE
+            Welcome to {settings.brandName}
           </motion.p>
         </motion.div>
       ) : (

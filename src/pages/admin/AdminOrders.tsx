@@ -26,6 +26,7 @@ interface OrderItemRow {
   color: string | null;
   price: number;
   quantity: number;
+  printful_sync_variant_id: number | null;
 }
 
 interface OrderRow {
@@ -40,6 +41,9 @@ interface OrderRow {
   zip: string | null;
   total: number;
   status: string;
+  printful_order_id: string | null;
+  printful_status: string | null;
+  printful_error: string | null;
   created_at: string;
   order_items: OrderItemRow[];
 }
@@ -94,6 +98,21 @@ export default function AdminOrders() {
     } else {
       toast({ title: "Status updated", description: `${short(id)} → ${status}` });
     }
+  };
+
+  const deleteOrder = async (id: string) => {
+    if (!confirm(`Delete ${short(id)}? This cannot be undone.`)) return;
+    setUpdatingId(id);
+    const { error } = await supabase.from("orders").delete().eq("id", id);
+    setUpdatingId(null);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    setOrders((prev) => prev.filter((o) => o.id !== id));
+    toast({ title: "Deleted", description: short(id) });
+    // close detail drawer if open
+    if (selectedId === id) setSelectedId(null);
   };
 
   const filtered = useMemo(
@@ -170,6 +189,7 @@ export default function AdminOrders() {
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Customer</th>
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Date</th>
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Status</th>
+                  <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Printful</th>
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Update</th>
                   <th className="text-right text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Total</th>
                 </tr>
@@ -195,6 +215,9 @@ export default function AdminOrders() {
                     </td>
                     <td className="px-4 py-3 cursor-pointer" onClick={() => setSelectedId(order.id)}>
                       <StatusBadge status={order.status} />
+                    </td>
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => setSelectedId(order.id)}>
+                      <StatusBadge status={order.printful_status || "not_submitted"} />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
@@ -239,9 +262,19 @@ export default function AdminOrders() {
                   <h2 className="text-base font-bold text-foreground">{short(selected.id)}</h2>
                   <p className="text-xs text-muted-foreground">{new Date(selected.created_at).toLocaleString()}</p>
                 </div>
-                <button onClick={() => setSelectedId(null)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                  <X size={16} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => deleteOrder(selected.id)}
+                    disabled={updatingId === selected.id}
+                    className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors"
+                    title="Delete order"
+                  >
+                    <XCircle size={16} />
+                  </button>
+                  <button onClick={() => setSelectedId(null)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
               <div className="p-5 space-y-6">
                 <div>
@@ -258,6 +291,23 @@ export default function AdminOrders() {
                         <option key={s} value={s} className="capitalize">{s}</option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Printful</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={selected.printful_status || "not_submitted"} />
+                      {selected.printful_order_id && (
+                        <span className="text-xs text-muted-foreground">
+                          #{selected.printful_order_id}
+                        </span>
+                      )}
+                    </div>
+                    {selected.printful_error && (
+                      <p className="text-xs text-destructive leading-relaxed">{selected.printful_error}</p>
+                    )}
                   </div>
                 </div>
 
@@ -311,6 +361,9 @@ export default function AdminOrders() {
                           <p className="text-sm text-foreground truncate">{item.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {item.size ? `Size ${item.size} · ` : ""}Qty {item.quantity}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Printful sync ID: {item.printful_sync_variant_id ?? "Not mapped"}
                           </p>
                         </div>
                         <span className="text-sm font-medium text-foreground/70">

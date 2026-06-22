@@ -1,7 +1,9 @@
 import { format } from "date-fns";
+import { useBrandSettings } from "@/context/LogoContext";
 
 export default function PrivacyPage() {
   const lastUpdated = "June 17, 2024";
+  const { settings } = useBrandSettings();
 
   return (
     <div className="min-h-screen bg-background">
@@ -19,7 +21,7 @@ export default function PrivacyPage() {
           <div>
             <h2 className="text-2xl font-bold mb-4">1. Introduction</h2>
             <p className="text-muted-foreground">
-              Be An Example Inc. ("we", "us", "our", or "Company") respects your privacy and is committed to protecting your personal data. 
+              {settings.companyName} ("we", "us", "our", or "Company") respects your privacy and is committed to protecting your personal data. 
               This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
             </p>
           </div>
@@ -88,7 +90,7 @@ export default function PrivacyPage() {
               We do not sell your personal information. We may share your data with:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-              <li><span className="font-semibold">Service Providers:</span> Shipping, payment processing, analytics (with data processing agreements)</li>
+              <li><span className="font-semibold">Service Providers:</span> Shipping, payment processing, analytics, and fulfillment partners such as Printful (with data processing agreements)</li>
               <li><span className="font-semibold">Business Partners:</span> Affiliated companies and partners (only where necessary)</li>
               <li><span className="font-semibold">Legal Requirements:</span> When required by law, court order, or government request</li>
               <li><span className="font-semibold">Business Transfers:</span> In case of merger, acquisition, or asset sale</li>
@@ -140,7 +142,7 @@ export default function PrivacyPage() {
               <li><span className="font-semibold">Objection:</span> Object to data processing</li>
             </ul>
             <p className="text-muted-foreground mt-4">
-              To exercise these rights, contact us at privacy@beanexample.com.
+              To exercise these rights, contact us at {settings.privacyEmail}.
             </p>
           </div>
 
@@ -182,9 +184,9 @@ export default function PrivacyPage() {
               If you have questions about this Privacy Policy or our privacy practices, please contact us:
             </p>
             <div className="bg-secondary/30 p-6 rounded-lg mt-4">
-              <p className="font-semibold">Be An Example Inc.</p>
-              <p className="text-muted-foreground">Email: privacy@beanexample.com</p>
-              <p className="text-muted-foreground">Support: support@beanexample.com</p>
+              <p className="font-semibold">{settings.companyName}</p>
+              <p className="text-muted-foreground">Email: {settings.privacyEmail}</p>
+              <p className="text-muted-foreground">Support: {settings.supportEmail}</p>
             </div>
           </div>
         </div>

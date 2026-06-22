@@ -1,5 +1,8 @@
+import { useBrandSettings } from "@/context/LogoContext";
+
 export default function RefundPolicy() {
-  const lastUpdated = "June 17, 2024";
+  const lastUpdated = "June 17, 2026"; // This can be dynamically set based on actual last update time
+  const { settings } = useBrandSettings();
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,6 +38,9 @@ export default function RefundPolicy() {
             <h2 className="text-2xl font-bold mb-4">3. Return Conditions</h2>
             <p className="text-muted-foreground mb-3">
               To be eligible for a return, items must meet the following conditions:
+            </p>
+            <p className="text-muted-foreground mb-3">
+              Because products are made on-demand through our fulfillment partner, Printful, please inspect your order carefully and contact us immediately if there is an issue.
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
               <li>Unused and in original, unused condition</li>
@@ -211,9 +217,9 @@ export default function RefundPolicy() {
               For questions about returns or refunds, please contact our customer support team:
             </p>
             <div className="bg-secondary/30 p-6 rounded-lg mt-4">
-              <p className="font-semibold">Be An Example Inc.</p>
-              <p className="text-muted-foreground">Email: support@beanexample.com</p>
-              <p className="text-muted-foreground">Hours: Mon-Fri 9AM-6PM EST, Sat-Sun 10AM-4PM EST</p>
+              <p className="font-semibold">{settings.companyName}</p>
+              <p className="text-muted-foreground">Email: {settings.supportEmail}</p>
+              <p className="text-muted-foreground">Hours: {settings.weekdayHours}, {settings.weekendHours}</p>
             </div>
           </div>
         </div>

@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
 export default function Footer() {
-  const { logo } = useLogo();
+  const { logo, settings } = useLogo();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,9 +56,9 @@ export default function Footer() {
   ];
 
   const socialLinks = [
-    { icon: Facebook, label: "Facebook", href: "https://www.facebook.com/beanexample", color: "#1877F2" },
-    { icon: Instagram, label: "Instagram", href: "#", color: "#E1306C" },
-    { icon: Twitter, label: "Twitter", href: "#", color: "#1DA1F2" },
+    { icon: Facebook, label: "Facebook", href: settings.facebookUrl, color: "#1877F2" },
+    { icon: Instagram, label: "Instagram", href: settings.instagramUrl, color: "#E1306C" },
+    { icon: Twitter, label: "Twitter", href: settings.twitterUrl, color: "#1DA1F2" },
   ];
 
   return (
@@ -76,11 +76,11 @@ export default function Footer() {
           >
             {logo && (
               <div className="mb-6">
-                <img src={logo} alt="Logo" className="h-10 object-contain invert" />
+                <img src={logo} alt={settings.brandName} className="h-10 object-contain invert" />
               </div>
             )}
             <p className="text-sm text-primary-foreground/70 mb-6">
-              Be the one others look up to.
+              {settings.tagline}
             </p>
             <div className="flex gap-4">
               {socialLinks.map((social, idx) => {
@@ -208,7 +208,7 @@ export default function Footer() {
             {/* Copyright */}
             <div className="text-center md:text-left">
               <p className="text-sm text-primary-foreground/60">
-                © {new Date().getFullYear()} Be An Example Inc. All rights reserved.
+                © {new Date().getFullYear()} {settings.companyName} All rights reserved.
               </p>
             </div>
 
@@ -229,9 +229,9 @@ export default function Footer() {
 
             {/* Contact Info */}
             <div className="text-center md:text-right">
-              <a href="mailto:support@beanexample.com" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors flex items-center justify-center md:justify-end gap-2">
+              <a href={`mailto:${settings.supportEmail}`} className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors flex items-center justify-center md:justify-end gap-2">
                 <Mail size={16} />
-                support@beanexample.com
+                {settings.supportEmail}
               </a>
             </div>
           </div>

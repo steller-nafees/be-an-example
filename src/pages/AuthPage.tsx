@@ -4,6 +4,7 @@ import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Loader2, CheckCircle2 } from 
 import { Link, useNavigate, useLocation, Navigate } from "react-router-dom";
 import heroImg from "@/assets/collection-hoodies.jpg";
 import { useAuth } from "@/context/AuthContext";
+import { useBrandSettings } from "@/context/LogoContext";
 import { toast } from "sonner";
 
 type Mode = "login" | "signup" | "forgot";
@@ -15,6 +16,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, signUp, resetPassword, user, role, loading: authLoading } = useAuth();
+  const { settings } = useBrandSettings();
   const redirectTo = (location.state as any)?.from as string | undefined;
 
   const [mode, setMode] = useState<Mode>(location.pathname === "/reset-password" ? "forgot" : "login");
@@ -114,7 +116,7 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex bg-background">
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
-        <img src={heroImg} alt="BE AN EXAMPLE" className="w-full h-full object-cover" />
+        <img src={heroImg} alt={settings.brandName} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-foreground/60" />
         <div className="absolute inset-0 flex flex-col justify-end p-16">
           <motion.h2
@@ -122,10 +124,10 @@ export default function AuthPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-5xl font-black text-primary-foreground leading-tight mb-4"
           >
-            BE AN<br />EXAMPLE
+            {settings.brandName}
           </motion.h2>
           <p className="text-primary-foreground/60 text-sm tracking-widest uppercase">
-            Don't follow trends. Set them.
+            {settings.tagline}
           </p>
         </div>
       </div>
