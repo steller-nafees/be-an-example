@@ -4,6 +4,7 @@ import { Copy, ArrowUpRight, MousePointerClick, ShoppingBag, DollarSign, Check }
 import { useState } from "react";
 import { useMyAffiliate, useMyCommissions, useMyClicks, computeEarnings } from "@/hooks/use-affiliate";
 import PageHeader from "./_PageHeader";
+import { formatCurrency } from "@/lib/currency";
 
 export default function DashboardAffiliate() {
   const { data: aff, isLoading } = useMyAffiliate();
@@ -84,8 +85,8 @@ export default function DashboardAffiliate() {
 
       {/* Stats */}
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat icon={DollarSign} label="Total earnings" value={`$${e.total.toFixed(2)}`} />
-        <Stat icon={DollarSign} label="Paid out" value={`$${e.paid.toFixed(2)}`} />
+        <Stat icon={DollarSign} label="Total earnings" value={formatCurrency(e.total)} />
+        <Stat icon={DollarSign} label="Paid out" value={formatCurrency(e.paid)} />
         <Stat icon={MousePointerClick} label="Clicks" value={clicks.length.toString()} />
         <Stat icon={ShoppingBag} label="Conversion" value={`${conversionRate.toFixed(1)}%`} sub={`${conversions} orders`} />
       </div>
@@ -110,7 +111,7 @@ export default function DashboardAffiliate() {
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full bg-foreground/[0.05]">{c.status}</span>
-                  <p className="font-semibold">+${Number(c.amount).toFixed(2)}</p>
+                  <p className="font-semibold">+{formatCurrency(Number(c.amount))}</p>
                 </div>
               </li>
             ))}

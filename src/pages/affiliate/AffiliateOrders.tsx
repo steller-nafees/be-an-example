@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useMyAffiliate } from "@/hooks/use-affiliate";
 import StatusBadge from "@/components/admin/StatusBadge";
+import { formatCurrency } from "@/lib/currency";
 
 interface OrderRow {
   id: string;
@@ -92,7 +93,7 @@ export default function AffiliateOrders() {
                       </p>
                     </td>
                     <td className="px-5 py-3 text-muted-foreground">{order.email}</td>
-                    <td className="px-5 py-3 font-medium">${Number(order.total).toFixed(2)}</td>
+                    <td className="px-5 py-3 font-medium">{formatCurrency(Number(order.total))}</td>
                     <td className="px-5 py-3">
                       <StatusBadge
                         status={

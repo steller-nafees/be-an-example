@@ -4,6 +4,7 @@ import { Check, CheckSquare2, Loader2, Plus, Search, Trash2, X } from "lucide-re
 import { useProducts } from "@/hooks/use-products";
 import { useCoupons, useDeleteCoupon, useUpsertCoupon, type Coupon } from "@/hooks/use-coupons";
 import { formatCouponValue, normalizeCouponCode, type CouponDiscountType } from "@/lib/coupons";
+import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
 
 type Draft = {
@@ -244,7 +245,7 @@ export default function AdminCoupons() {
                         )}
                         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                           <span>{formatCouponValue(coupon.discount_type, Number(coupon.discount_value))}</span>
-                          <span>Minimum subtotal ${Number(coupon.minimum_subtotal).toFixed(2)}</span>
+                          <span>Minimum subtotal {formatCurrency(Number(coupon.minimum_subtotal))}</span>
                           <span>Used {coupon.times_used}{coupon.usage_limit ? ` / ${coupon.usage_limit}` : ""} times</span>
                         </div>
                       </div>
@@ -441,7 +442,7 @@ export default function AdminCoupons() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-foreground truncate">{product.name}</p>
-                            <p className="text-[11px] text-muted-foreground">${Number(product.price).toFixed(2)}</p>
+                            <p className="text-[11px] text-muted-foreground">{formatCurrency(Number(product.price))}</p>
                           </div>
                           {selected ? <Check size={16} className="text-foreground" /> : <CheckSquare2 size={16} className="text-muted-foreground" />}
                         </button>

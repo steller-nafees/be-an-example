@@ -16,6 +16,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { X as XIcon, Trash2 } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 const statusMap: Record<string, string> = {
   pending: "pending",
@@ -243,7 +244,7 @@ export default function AdminAffiliates() {
 
                 <div className="pt-3 border-t">
                   <p className="text-sm text-muted-foreground">Commission earned</p>
-                  <p className="text-lg font-semibold">${commissionSum.toFixed(2)}</p>
+                  <p className="text-lg font-semibold">{formatCurrency(commissionSum)}</p>
                 </div>
               </>
             )}

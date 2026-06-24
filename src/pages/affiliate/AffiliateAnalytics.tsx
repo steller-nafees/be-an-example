@@ -3,13 +3,16 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 import { Loader2 } from "lucide-react";
 import { useMyAffiliate, useMyClicks, useMyCommissions } from "@/hooks/use-affiliate";
 import { useMemo } from "react";
+import { formatCurrency } from "@/lib/currency";
 
 const ChartTooltip = ({ active, payload, label, prefix = "" }: any) => {
   if (active && payload?.length) {
     return (
       <div className="bg-background border border-border rounded-md px-3 py-2 shadow-lg">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold text-foreground">{prefix}{Number(payload[0].value).toLocaleString()}</p>
+        <p className="text-sm font-semibold text-foreground">
+          {prefix ? `${prefix}${Number(payload[0].value).toLocaleString()}` : Number(payload[0].value).toLocaleString()}
+        </p>
       </div>
     );
   }
@@ -71,8 +74,8 @@ export default function AffiliateAnalytics() {
               <AreaChart data={earningsData}>
                 <defs><linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(0,0%,0%)" stopOpacity={0.08} /><stop offset="100%" stopColor="hsl(0,0%,0%)" stopOpacity={0} /></linearGradient></defs>
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} tickFormatter={(v) => `$${v}`} />
-                <Tooltip content={<ChartTooltip prefix="$" />} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} tickFormatter={(v) => formatCurrency(Number(v))} />
+                <Tooltip content={<ChartTooltip prefix="£" />} />
                 <Area type="monotone" dataKey="value" stroke="hsl(0,0%,0%)" strokeWidth={1.5} fill="url(#revGrad)" />
               </AreaChart>
             </ResponsiveContainer>

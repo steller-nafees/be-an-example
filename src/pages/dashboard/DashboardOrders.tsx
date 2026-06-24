@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter, Check, Package, Truck, Home, Clock, RotateCcw } from "lucide-react";
+import { Search, Filter, Check, Package, Truck, Home, Clock, RotateCcw, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import Invoice from "@/components/Invoice";
+import InvoiceDownloadButton from "@/components/InvoiceDownload";
+import ModalPortal from "@/components/ModalPortal";
+import type { Order as InvoiceOrder } from "@/context/OrderContext";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 import PageHeader from "./_PageHeader";
+import { formatCurrency } from "@/lib/currency";
 
 type Order = {
   id: string;
@@ -31,6 +37,8 @@ export default function DashboardOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [items, setItems] = useState<Record<string, OrderItem[]>>({});
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceOrder | null>(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
   const [loading, setLoading] = useState(true);
@@ -67,6 +75,63 @@ export default function DashboardOrders() {
     if (next && !items[id]) {
       const { data } = await supabase.from("order_items").select("*").eq("order_id", id);
       setItems((m) => ({ ...m, [id]: (data as OrderItem[]) || [] }));
+    }
+  };
+
+  const openInvoice = async (id: string) => {
+    setInvoiceLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error || !data) {
+        throw new Error(error?.message || "Invoice could not be loaded.");
+      }
+
+      const orderRow = data as any;
+      const invoiceOrder: InvoiceOrder = {
+        id: orderRow.id,
+        formattedId: orderRow.formatted_id ?? `BAEO-${orderRow.id.slice(0, 4).toUpperCase()}`,
+        customerInfo: {
+          firstName: orderRow.first_name || "",
+          lastName: orderRow.last_name || "",
+          email: orderRow.email || "",
+          phone: orderRow.phone || "",
+          address: orderRow.address || "",
+          city: orderRow.city || "",
+          state: orderRow.state || "",
+          zip: orderRow.zip || "",
+        },
+        items: (orderRow.order_items || []).map((item: any) => ({
+          id: item.product_id,
+          variantId: item.variant_id ?? undefined,
+          printfulSyncVariantId: item.printful_sync_variant_id ?? null,
+          name: item.name,
+          price: Number(item.price || 0),
+          size: item.size || "",
+          color: item.color || "",
+          image: item.image || "",
+          quantity: Number(item.quantity || 1),
+        })),
+        shippingMethod: (orderRow.shipping_method || "standard") as "standard" | "express" | "overnight",
+        deliveryFee: Number(orderRow.delivery_fee || 0),
+        subtotal: Number(orderRow.subtotal || 0),
+        tax: Number(orderRow.tax || 0),
+        total: Number(orderRow.total || 0),
+        date: orderRow.created_at ?? new Date().toISOString(),
+        status: (orderRow.status || "pending") as "pending" | "processing" | "shipped" | "delivered",
+        couponCode: orderRow.coupon_code ?? null,
+        couponTitle: orderRow.coupon_title ?? null,
+        discountAmount: Number(orderRow.discount_amount || 0),
+      };
+      setSelectedInvoice(invoiceOrder);
+    } catch (error: any) {
+      toast({ title: "Invoice unavailable", description: error?.message || "Unable to load the invoice.", variant: "destructive" });
+    } finally {
+      setInvoiceLoading(false);
     }
   };
 
@@ -135,12 +200,12 @@ export default function DashboardOrders() {
                     <p className="font-mono text-[11px] text-muted-foreground mb-0.5">#{o.id.slice(0, 8).toUpperCase()}</p>
                     <p className="text-sm font-semibold text-foreground">{new Date(o.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</p>
                   </div>
-                  <p className="hidden md:block text-sm">${Number(o.total).toFixed(2)}</p>
+                  <p className="hidden md:block text-sm">{formatCurrency(Number(o.total))}</p>
                   <div className="hidden md:block">
                     <StatusPill status={o.status} />
                   </div>
                   <div className="md:hidden flex flex-col items-end gap-1.5">
-                    <p className="text-sm font-semibold">${Number(o.total).toFixed(2)}</p>
+                    <p className="text-sm font-semibold">{formatCurrency(Number(o.total))}</p>
                     <StatusPill status={o.status} />
                   </div>
                   <motion.span animate={{ rotate: expanded === o.id ? 180 : 0 }} className="hidden md:block text-muted-foreground text-xs">▾</motion.span>
@@ -208,7 +273,7 @@ export default function DashboardOrders() {
                                 <p className="text-sm font-medium truncate">{it.name}</p>
                                 <p className="text-xs text-muted-foreground">{it.size && `${it.size} · `}Qty {it.quantity}</p>
                               </div>
-                              <p className="text-sm">${(it.price * it.quantity).toFixed(2)}</p>
+                              <p className="text-sm">{formatCurrency(it.price * it.quantity)}</p>
                             </div>
                           ))}
                           {!items[o.id] && <div className="h-14 bg-muted/40 rounded-md animate-pulse" />}
@@ -218,7 +283,10 @@ export default function DashboardOrders() {
                           <button className="text-[11px] tracking-[0.2em] uppercase px-4 h-10 border border-border rounded-lg hover:bg-foreground hover:text-background transition-colors inline-flex items-center gap-2">
                             <RotateCcw size={13} /> Reorder
                           </button>
-                          <button className="text-[11px] tracking-[0.2em] uppercase px-4 h-10 border border-border rounded-lg hover:bg-foreground hover:text-background transition-colors">
+                          <button
+                            onClick={() => openInvoice(o.id)}
+                            className="text-[11px] tracking-[0.2em] uppercase px-4 h-10 border border-border rounded-lg hover:bg-foreground hover:text-background transition-colors"
+                          >
                             Download invoice
                           </button>
                         </div>
@@ -231,6 +299,57 @@ export default function DashboardOrders() {
           })
         )}
       </div>
+
+      <ModalPortal>
+        <AnimatePresence>
+          {selectedInvoice && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+              onClick={() => setSelectedInvoice(null)}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-background rounded-lg shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-background px-5 py-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">Invoice {selectedInvoice.formattedId}</h3>
+                    <p className="text-xs text-muted-foreground">Preview and download your order invoice.</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedInvoice(null)}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div className="p-4 sm:p-6">
+                  <Invoice order={selectedInvoice} />
+                </div>
+
+                <div className="sticky bottom-0 flex justify-end gap-3 border-t border-border bg-background px-5 py-4">
+                  <button
+                    onClick={() => setSelectedInvoice(null)}
+                    className="px-4 py-2 border border-border rounded-md text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    Close
+                  </button>
+                  <InvoiceDownloadButton order={selectedInvoice} contentId="invoice-content" />
+                  {invoiceLoading && <span className="self-center text-xs text-muted-foreground">Loading invoice...</span>}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </ModalPortal>
     </div>
   );
 }

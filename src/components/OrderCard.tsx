@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { ChevronRight, Eye } from "lucide-react";
 import type { Order } from "@/context/OrderContext";
+import { formatCurrency } from "@/lib/currency";
 
 interface OrderCardProps {
   order: Order;
@@ -37,7 +38,7 @@ export default function OrderCard({ order, onViewInvoice }: OrderCardProps) {
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Total</p>
-            <p className="font-semibold text-foreground">${order.total.toFixed(2)}</p>
+            <p className="font-semibold text-foreground">{formatCurrency(order.total)}</p>
           </div>
         </div>
       </div>

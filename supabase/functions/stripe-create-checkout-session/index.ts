@@ -67,6 +67,15 @@ Deno.serve(async (req) => {
   const amountCents = Math.round(Number(order.total || 0) * 100);
   if (amountCents <= 0) return json({ error: "Order total must be greater than zero." }, 400);
 
+  const { data: brandSetting } = await adminSupabase
+    .from("site_settings")
+    .select("value")
+    .eq("key", "brand")
+    .maybeSingle();
+
+  const brandValue = brandSetting?.value as { currency?: unknown } | null | undefined;
+  const storeCurrency = typeof brandValue?.currency === "string" ? brandValue.currency.trim().toLowerCase() : "gbp";
+
   const params = new URLSearchParams();
   params.set("mode", "payment");
   params.set("success_url", `${origin}/checkout?stripe_status=success&session_id={CHECKOUT_SESSION_ID}`);
@@ -78,7 +87,7 @@ Deno.serve(async (req) => {
   params.set("metadata[user_id]", user.id);
   if (order.coupon_code) params.set("metadata[coupon_code]", order.coupon_code);
   params.set("line_items[0][quantity]", "1");
-  params.set("line_items[0][price_data][currency]", "usd");
+  params.set("line_items[0][price_data][currency]", storeCurrency || "gbp");
   params.set("line_items[0][price_data][unit_amount]", String(amountCents));
   params.set(
     "line_items[0][price_data][product_data][name]",

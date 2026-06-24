@@ -13,7 +13,10 @@ export default function InvoiceDownloadButton({ order, contentId }: InvoiceDownl
 
   const handleDownload = async () => {
     const element = document.getElementById(contentId);
-    if (!element) return;
+    if (!element) {
+      console.error(`Invoice content element not found: ${contentId}`);
+      return;
+    }
     setDownloading(true);
 
     try {
@@ -25,7 +28,7 @@ export default function InvoiceDownloadButton({ order, contentId }: InvoiceDownl
         jsPDF: { orientation: "portrait" as const, unit: "mm" as const, format: "a4" },
       };
 
-      html2pdf().set(opt).from(element).save();
+      await html2pdf().set(opt).from(element).save();
     } catch (error) {
       console.error("Failed to download invoice:", error);
     } finally {

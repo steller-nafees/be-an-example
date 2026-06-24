@@ -5,6 +5,7 @@ import ModalPortal from "@/components/ModalPortal";
 import { useAdminOrders, useAdminProfiles } from "@/hooks/use-admin-data";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/currency";
 
 interface CustomerAgg {
   id: string;
@@ -122,7 +123,7 @@ export default function AdminCustomers() {
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{customer.joinedDate}</td>
                   <td className="px-4 py-3 text-sm text-foreground/70">{customer.totalOrders}</td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-foreground/80">${customer.totalSpend.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right text-sm font-medium text-foreground/80">{formatCurrency(customer.totalSpend)}</td>
                 </tr>
               ))}
               {filtered.length === 0 && (
@@ -160,7 +161,7 @@ export default function AdminCustomers() {
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Orders</p>
                   </div>
                   <div className="p-3 bg-muted/50 border border-border rounded-md text-center">
-                    <p className="text-lg font-bold text-foreground">${selected.totalSpend.toFixed(2)}</p>
+                    <p className="text-lg font-bold text-foreground">{formatCurrency(selected.totalSpend)}</p>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Spent</p>
                   </div>
                   <div className="p-3 bg-muted/50 border border-border rounded-md text-center">
@@ -179,7 +180,7 @@ export default function AdminCustomers() {
                             <p className="text-sm text-foreground font-medium">ORD-{order.id.slice(0, 8).toUpperCase()}</p>
                             <p className="text-xs text-muted-foreground">{order.created_at.slice(0, 10)}</p>
                           </div>
-                          <span className="text-sm font-medium text-foreground/70">${Number(order.total).toFixed(2)}</span>
+                          <span className="text-sm font-medium text-foreground/70">{formatCurrency(Number(order.total))}</span>
                         </div>
                       ))}
                     </div>

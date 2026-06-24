@@ -29,6 +29,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/lib/currency";
 
 /* ---------------- helpers ---------------- */
 
@@ -648,7 +649,7 @@ export default function ProductPage() {
               </div>
 
               <p className="text-3xl font-light text-foreground mb-2 tabular-nums">
-                ${displayPrice}
+                {formatCurrency(displayPrice)}
               </p>
               {selectedVariant?.sku && (
                 <p className="text-xs text-muted-foreground mb-6">SKU: {selectedVariant.sku}</p>
@@ -1009,7 +1010,7 @@ export default function ProductPage() {
           } disabled:opacity-50`}
         >
           <ShoppingBag size={14} />
-          {added ? "Added" : primaryCtaLabel === "Add to Cart" ? `Add · $${displayPrice}` : primaryCtaLabel}
+          {added ? "Added" : primaryCtaLabel === "Add to Cart" ? `Add · ${formatCurrency(displayPrice)}` : primaryCtaLabel}
         </motion.button>
       </div>
 

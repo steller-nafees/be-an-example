@@ -340,9 +340,11 @@ export default function AdminSettings() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Currency</label>
-                <select className="w-full h-10 bg-background border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-colors appearance-none">
-                  <option value="usd">USD ($)</option>
-                  <option value="eur">EUR (€)</option>
+                <select
+                  value={settingsDraft.currency}
+                  onChange={(event) => handleSettingChange("currency", event.target.value)}
+                  className="w-full h-10 bg-background border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-colors appearance-none"
+                >
                   <option value="gbp">GBP (£)</option>
                 </select>
               </div>
@@ -355,7 +357,10 @@ export default function AdminSettings() {
                 />
               </div>
             </div>
-            <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-sm font-semibold rounded-md hover:bg-foreground/90 transition-colors">
+            <button
+              onClick={handleSaveStoreSettings}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-sm font-semibold rounded-md hover:bg-foreground/90 transition-colors"
+            >
               <Save size={15} />
               Save Changes
             </button>

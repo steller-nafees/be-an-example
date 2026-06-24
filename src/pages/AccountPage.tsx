@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
 
 type Order = {
   id: string;
@@ -112,7 +113,7 @@ export default function AccountPage() {
                       <Link to={`/orders/${o.id}`} className="flex items-center justify-between p-5 hover:bg-muted/40 transition">
                         <div>
                           <p className="font-mono text-xs text-muted-foreground mb-1">#{o.id.slice(0, 8).toUpperCase()}</p>
-                          <p className="text-sm text-foreground">{new Date(o.created_at).toLocaleDateString()} · ${Number(o.total).toFixed(2)}</p>
+                          <p className="text-sm text-foreground">{new Date(o.created_at).toLocaleDateString()} · {formatCurrency(Number(o.total))}</p>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className={`text-[11px] uppercase tracking-wide px-2 py-0.5 rounded-full ${statusColor[o.status] || "bg-muted text-muted-foreground"}`}>{o.status}</span>

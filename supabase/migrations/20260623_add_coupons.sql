@@ -404,7 +404,7 @@ begin
       when (item->>'variant_id') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then (item->>'variant_id')::uuid
       else null
     end,
-    nullif(item->>'printful_sync_variant_id','')::int,
+    nullif(item->>'printful_sync_variant_id','')::bigint,
     item->>'name',
     item->>'image',
     nullif(item->>'size',''),

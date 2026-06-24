@@ -12,6 +12,7 @@ import { useBrandSettings } from "@/context/LogoContext";
 import { getReferralCode } from "@/hooks/use-referral-tracking";
 import { toast } from "@/hooks/use-toast";
 import { previewCouponDiscount, type CouponPreview } from "@/lib/coupons";
+import { formatCurrency } from "@/lib/currency";
 
 const steps = [
   { label: "Shipping", icon: MapPin },
@@ -86,6 +87,8 @@ export default function CheckoutPage() {
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
   const { settings } = useBrandSettings();
+  const storeCurrency = settings.currency || "gbp";
+  const money = (value: number) => formatCurrency(value, storeCurrency);
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -585,7 +588,7 @@ export default function CheckoutPage() {
                     <div className="space-y-3 sm:space-y-4">
                       <h2 className="text-xs sm:text-sm font-bold tracking-widest uppercase text-foreground mb-4 sm:mb-6">Delivery Method</h2>
                       {[
-                        { id: "standard", label: "Free Shipping", desc: "5–7 business days", price: "Free", badge: "Recommended" },
+                        { id: "standard", label: "Free Shipping", desc: "8-14 business days", price: "Free", badge: "Recommended" },
                       ].map((m) => (
                         <motion.button
                           key={m.id}
@@ -640,7 +643,7 @@ export default function CheckoutPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground">Stripe test checkout</p>
-                            <p className="text-sm text-muted-foreground mt-1">
+                              <p className="text-sm text-muted-foreground mt-1">
                               Your payment will be completed on Stripe's secure checkout page. Use a Stripe test card there.
                             </p>
                           </div>
@@ -669,7 +672,7 @@ export default function CheckoutPage() {
                             <p>Validating coupon...</p>
                           ) : couponPreview?.valid ? (
                             <p>
-                              Coupon {couponPreview.code ?? couponCode} applied{couponPreview.discountAmount > 0 ? `, saving $${couponPreview.discountAmount.toFixed(2)}.` : "."}
+                              Coupon {couponPreview.code ?? couponCode} applied{couponPreview.discountAmount > 0 ? `, saving ${money(couponPreview.discountAmount)}.` : "."}
                             </p>
                           ) : null}
                         </div>
@@ -699,7 +702,7 @@ export default function CheckoutPage() {
                           <h3 className="text-xs font-bold tracking-widest uppercase text-foreground">Delivery</h3>
                           <button onClick={() => goTo(1)} className="text-xs text-muted-foreground hover:text-foreground underline transition-colors">Edit</button>
                         </div>
-                        <p className="text-sm text-muted-foreground capitalize">{deliveryMethod} — {deliveryCost === 0 ? "Free" : `$${deliveryCost}.00`}</p>
+                        <p className="text-sm text-muted-foreground capitalize">{deliveryMethod} — {deliveryCost === 0 ? "Free" : money(deliveryCost)}</p>
                       </div>
 
                       <div className="rounded-3xl border border-border bg-background/70 p-5 shadow-sm">
@@ -725,7 +728,7 @@ export default function CheckoutPage() {
                                 <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
                                 <p className="text-xs text-muted-foreground">Size: {item.size} × {item.quantity}</p>
                               </div>
-                              <span className="text-sm font-bold text-foreground">${(item.price * item.quantity).toFixed(2)}</span>
+                              <span className="text-sm font-bold text-foreground">{money(item.price * item.quantity)}</span>
                             </div>
                           ))}
                         </div>
@@ -757,7 +760,7 @@ export default function CheckoutPage() {
                   ) : step === 3 ? (
                     <>
                       <ShieldCheck size={14} />
-                      Continue to Stripe — ${total.toFixed(2)}
+                      Continue to Stripe — {money(total)}
                     </>
                   ) : (
                     "Continue"
@@ -786,7 +789,7 @@ export default function CheckoutPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-foreground truncate">{item.name}</p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">Size: {item.size} × {item.quantity}</p>
-                          <p className="text-xs font-bold text-foreground mt-1">${(item.price * item.quantity).toFixed(2)}</p>
+                          <p className="text-xs font-bold text-foreground mt-1">{money(item.price * item.quantity)}</p>
                         </div>
                       </motion.div>
                     ))}
@@ -794,30 +797,30 @@ export default function CheckoutPage() {
                       <div className="space-y-2 border-t border-border pt-4 text-sm">
                         <div className="flex justify-between text-muted-foreground text-xs">
                           <span>Subtotal</span>
-                          <span>${totalPrice.toFixed(2)}</span>
+                          <span>{money(totalPrice)}</span>
                         </div>
                         {couponPreview?.valid && couponPreview.discountAmount > 0 && (
                           <div className="flex justify-between text-foreground text-xs">
                             <span>Coupon {couponPreview.code ?? couponCode}</span>
-                            <span>- ${couponPreview.discountAmount.toFixed(2)}</span>
+                            <span>- {money(couponPreview.discountAmount)}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-muted-foreground text-xs">
                           <span>Merchandise total</span>
-                          <span>${discountedSubtotal.toFixed(2)}</span>
+                          <span>{money(discountedSubtotal)}</span>
                         </div>
                         <div className="flex justify-between text-muted-foreground text-xs">
                           <span>Shipping</span>
-                          <span>{deliveryCost === 0 ? "Free" : `$${deliveryCost}.00`}</span>
+                          <span>{deliveryCost === 0 ? "Free" : money(deliveryCost)}</span>
                         </div>
                         <div className="flex justify-between text-muted-foreground text-xs">
                           <span>Tax (10%)</span>
-                          <span>${tax.toFixed(2)}</span>
+                          <span>{money(tax)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-foreground pt-3 border-t border-border text-sm">
                           <span>Total</span>
                           <motion.span key={total} initial={{ scale: 1.05 }} animate={{ scale: 1 }}>
-                            ${total.toFixed(2)}
+                            {money(total)}
                           </motion.span>
                     </div>
                   </div>
@@ -832,7 +835,7 @@ export default function CheckoutPage() {
                 className="w-full flex items-center justify-between px-6 sm:px-8 py-5 text-sm font-semibold uppercase text-foreground bg-background rounded-t-3xl"
               >
                 <span>Order Summary ({items.length})</span>
-                <span className="font-bold">${total.toFixed(2)}</span>
+                <span className="font-bold">{money(total)}</span>
               </button>
               <AnimatePresence>
                 {summaryOpen && (
@@ -849,7 +852,7 @@ export default function CheckoutPage() {
                             <img src={item.image} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
                           </div>
                           <span className="flex-1 text-foreground truncate">{item.name} ({item.size}) × {item.quantity}</span>
-                          <span className="font-bold text-foreground">${(item.price * item.quantity).toFixed(2)}</span>
+                          <span className="font-bold text-foreground">{money(item.price * item.quantity)}</span>
                         </div>
                       ))}
                     </div>

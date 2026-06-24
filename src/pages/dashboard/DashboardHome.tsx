@@ -7,6 +7,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useMyAffiliate, useMyCommissions, computeEarnings } from "@/hooks/use-affiliate";
 import { supabase } from "@/lib/supabase";
 import { getTier, type MemberTier } from "@/components/dashboard/DashboardLayout";
+import { formatCurrency } from "@/lib/currency";
 
 type Ctx = { totalSpend: number; tier: MemberTier; firstName: string };
 
@@ -90,7 +91,7 @@ export default function DashboardHome() {
               <span className="text-[10px] tracking-[0.3em] uppercase text-background/70">{tier} Status</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-1">
-              {next ? `$${toNext.toFixed(2)} to ${next}` : "You've reached the top."}
+              {next ? `${formatCurrency(toNext)} to ${next}` : "You've reached the top."}
             </h2>
             <p className="text-background/60 text-sm mb-6">
               {next ? "Unlock exclusive drops, early access, and elevated rewards." : "Enjoy your Elite benefits — for life."}
@@ -115,7 +116,7 @@ export default function DashboardHome() {
             </div>
             <div>
               <p className="text-[10px] tracking-[0.25em] uppercase text-background/50 mb-1">Lifetime spend</p>
-              <p className="text-2xl font-black">$<CountUp value={totalSpend} decimals={0} /></p>
+              <p className="text-2xl font-black">{formatCurrency(totalSpend)}</p>
             </div>
           </div>
         </div>
@@ -126,7 +127,7 @@ export default function DashboardHome() {
         <StatCard icon={Package} label="Orders" value={orderCount} to="/account/orders" />
         <StatCard icon={Heart} label="Wishlist" value={wishCount} to="/account/wishlist" />
         <StatCard icon={Gift} label="Reward points" value={points} to="/account/rewards" />
-        <StatCard icon={TrendingUp} label="Referral earnings" value={earnings.total} prefix="$" decimals={2} to="/account/affiliate" />
+        <StatCard icon={TrendingUp} label="Referral earnings" value={earnings.total} currencyCode="gbp" decimals={2} to="/account/affiliate" />
       </motion.div>
 
       {/* Recent + recs */}
@@ -143,7 +144,7 @@ export default function DashboardHome() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-mono text-[11px] text-muted-foreground mb-1">#{String(recent.id).slice(0, 8).toUpperCase()}</p>
-                  <p className="text-2xl font-black">${Number(recent.total).toFixed(2)}</p>
+                  <p className="text-2xl font-black">{formatCurrency(Number(recent.total))}</p>
                   <p className="text-xs text-muted-foreground mt-1">{new Date(recent.created_at).toLocaleDateString()}</p>
                 </div>
                 <span className="text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full bg-foreground/[0.05] text-foreground">
@@ -187,6 +188,7 @@ function StatCard({
   to,
   prefix = "",
   decimals = 0,
+  currencyCode,
 }: {
   icon: any;
   label: string;
@@ -194,6 +196,7 @@ function StatCard({
   to: string;
   prefix?: string;
   decimals?: number;
+  currencyCode?: string;
 }) {
   return (
     <motion.div variants={item}>
@@ -206,7 +209,7 @@ function StatCard({
           <ArrowUpRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
         <p className="text-3xl font-black tracking-tight">
-          <CountUp value={value} prefix={prefix} decimals={decimals} />
+          {currencyCode ? formatCurrency(value, currencyCode) : <CountUp value={value} prefix={prefix} decimals={decimals} />}
         </p>
         <p className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground mt-1">{label}</p>
       </Link>

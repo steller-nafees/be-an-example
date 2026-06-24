@@ -10,7 +10,7 @@ alter table public.products
   add column if not exists scheduled_at date;
 
 alter table public.product_variants
-  add column if not exists printful_sync_variant_id integer;
+  add column if not exists printful_sync_variant_id bigint;
 
 alter table public.orders
   add column if not exists country text default 'US',
@@ -21,7 +21,7 @@ alter table public.orders
 
 alter table public.order_items
   add column if not exists variant_id uuid references public.product_variants(id) on delete set null,
-  add column if not exists printful_sync_variant_id integer;
+  add column if not exists printful_sync_variant_id bigint;
 
 create index if not exists product_variants_printful_sync_idx
   on public.product_variants(printful_sync_variant_id);
@@ -429,7 +429,7 @@ begin
       when (item->>'variant_id') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then (item->>'variant_id')::uuid
       else null
     end,
-    nullif(item->>'printful_sync_variant_id','')::int,
+    nullif(item->>'printful_sync_variant_id','')::bigint,
     item->>'name',
     item->>'image',
     nullif(item->>'size',''),

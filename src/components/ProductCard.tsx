@@ -5,6 +5,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useProductColors, useProductVariants } from "@/hooks/use-variants";
 import { Link } from "react-router-dom";
 import type { Product } from "@/lib/products";
+import { formatCurrency } from "@/lib/currency";
 
 interface Props {
   product: Product;
@@ -94,7 +95,7 @@ export default function ProductCard({ product, index = 0 }: Props) {
       <Link to={`/product/${product.id}`}>
         <h3 className="text-sm font-semibold tracking-wide text-foreground">{product.name}</h3>
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-sm text-muted-foreground">${product.price}</span>
+          <span className="text-sm text-muted-foreground">{formatCurrency(product.price)}</span>
           <span className="text-[10px] text-muted-foreground">
             {"★".repeat(Math.floor(product.rating))} ({product.reviews})
           </span>

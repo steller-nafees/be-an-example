@@ -32,6 +32,7 @@ import {
   useSaveProductVariants,
   type SaveColorInput,
 } from "@/hooks/use-variants";
+import { formatCurrency } from "@/lib/currency";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -147,6 +148,12 @@ const formatLaunchDate = (value?: string | null) => {
     day: "numeric",
     year: "numeric",
   });
+};
+
+const getTomorrowDateValue = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().slice(0, 10);
 };
 
 export default function AdminProducts() {
@@ -572,7 +579,7 @@ export default function AdminProducts() {
                       {collections.find((c) => c.id === product.collection_id)?.name || "—"}
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground capitalize">{product.category}</td>
-                    <td className="px-4 py-3 text-sm font-medium">${product.price}</td>
+                    <td className="px-4 py-3 text-sm font-medium">{formatCurrency(Number(product.price))}</td>
                     <td className="px-4 py-3">
                       <span className={`text-sm font-medium ${product.stock <= 5 ? "text-amber-600" : "text-foreground/70"}`}>{product.stock}</span>
                     </td>
@@ -626,7 +633,7 @@ export default function AdminProducts() {
               <div className="p-4">
                 <h3 className="text-sm font-semibold truncate">{product.name}</h3>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm font-medium">${product.price}</span>
+                  <span className="text-sm font-medium">{formatCurrency(Number(product.price))}</span>
                   <span className={`text-xs ${product.stock <= 5 ? "text-amber-600" : "text-muted-foreground"}`}>{product.stock} in stock</span>
                 </div>
               </div>
@@ -779,7 +786,7 @@ export default function AdminProducts() {
                 </Field>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Price ($)">
+                  <Field label="Price (GBP)">
                     <input type="number" min={0} step="0.01" value={editing.price} onChange={(e) => setEditing({ ...editing, price: parseFloat(e.target.value) || 0 })} className={inputCls} />
                   </Field>
                   <Field label="Category">
@@ -802,57 +809,74 @@ export default function AdminProducts() {
                       ))}
                     </select>
                   </Field>
-                  <Field label="Launch date">
+                  <Field label="Visibility">
                     <div className="space-y-2">
-                      <input
-                        type="date"
-                        value={editing.scheduled_at ?? ""}
-                        onChange={(e) => setEditing({ ...editing, scheduled_at: e.target.value || null })}
-                        className={inputCls}
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Keep blank for immediate release. When this date is in the future, the storefront button will say "Order On" until the date arrives.
-                      </p>
-                      {editing.scheduled_at && (
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           type="button"
-                          onClick={() => setEditing({ ...editing, scheduled_at: null })}
-                          className="text-[11px] text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                          onClick={() => setEditing({ ...editing, published: true, scheduled_at: null })}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border ${
+                            editing.published && !editing.scheduled_at
+                              ? "bg-foreground/10 border-foreground/20"
+                              : "border-border text-muted-foreground"
+                          }`}
                         >
-                          Clear launch date
+                          <Eye size={12} /> Published
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditing({ ...editing, published: false, scheduled_at: null })}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border ${
+                            !editing.published
+                              ? "bg-foreground/10 border-foreground/20"
+                              : "border-border text-muted-foreground"
+                          }`}
+                        >
+                          <EyeOff size={12} /> Draft
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditing({
+                              ...editing,
+                              published: true,
+                              scheduled_at: editing.scheduled_at ?? getTomorrowDateValue(),
+                            })
+                          }
+                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border ${
+                            editing.scheduled_at
+                              ? "bg-foreground/10 border-foreground/20"
+                              : "border-border text-muted-foreground"
+                          }`}
+                        >
+                          Schedule
+                        </button>
+                      </div>
+                      {editing.scheduled_at && (
+                        <div className="space-y-2">
+                          <input
+                            type="date"
+                            value={editing.scheduled_at ?? ""}
+                            onChange={(e) => setEditing({ ...editing, scheduled_at: e.target.value || null, published: true })}
+                            className={inputCls}
+                          />
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-[11px] text-muted-foreground">
+                              Storefront shows "Order On {formatLaunchDate(editing.scheduled_at)}" until this date arrives.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => setEditing({ ...editing, scheduled_at: null })}
+                              className="text-[11px] text-muted-foreground underline underline-offset-4 hover:text-foreground whitespace-nowrap"
+                            >
+                              Clear schedule
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </Field>
                 </div>
-
-                <Field label="Visibility">
-                  <div className="flex items-center gap-2 h-10">
-                    <button
-                      type="button"
-                      onClick={() => setEditing({ ...editing, published: true })}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border ${
-                        editing.published ? "bg-foreground/10 border-foreground/20" : "border-border text-muted-foreground"
-                      }`}
-                    >
-                      <Eye size={12} /> Published
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditing({ ...editing, published: false })}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border ${
-                        !editing.published ? "bg-foreground/10 border-foreground/20" : "border-border text-muted-foreground"
-                      }`}
-                    >
-                      <EyeOff size={12} /> Draft
-                    </button>
-                    {editing.scheduled_at && (
-                      <span className="text-[11px] text-muted-foreground">
-                        Launches on {formatLaunchDate(editing.scheduled_at)}
-                      </span>
-                    )}
-                  </div>
-                </Field>
 
                 {/* ===== Variants editor ===== */}
                 <div className="pt-2 border-t border-border">

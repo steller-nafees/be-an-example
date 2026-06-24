@@ -32,6 +32,7 @@ values
     '{
       "brandName": "BE AN EXAMPLE",
       "companyName": "Be An Example Inc.",
+      "currency": "gbp",
       "tagline": "Make Your Style An Example.",
       "logoScale": 1,
       "supportEmail": "support@beanexample.com",

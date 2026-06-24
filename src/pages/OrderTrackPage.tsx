@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronLeft, Loader2, Check, Package, Truck, Home, Clock, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency } from "@/lib/currency";
 
 type Order = {
   id: string;
@@ -139,14 +140,14 @@ export default function OrderTrackPage() {
                   {[it.size, it.color].filter(Boolean).join(" · ")} {it.size || it.color ? "·" : ""} Qty {it.quantity}
                 </p>
               </div>
-              <p className="text-sm font-medium">${(Number(it.price) * it.quantity).toFixed(2)}</p>
+              <p className="text-sm font-medium">{formatCurrency(Number(it.price) * it.quantity)}</p>
             </li>
           ))}
         </ul>
 
         <div className="flex justify-between border-t border-border pt-4 text-sm">
           <span className="text-muted-foreground">Total</span>
-          <span className="font-bold">${Number(order.total).toFixed(2)}</span>
+          <span className="font-bold">{formatCurrency(Number(order.total))}</span>
         </div>
       </main>
     </div>

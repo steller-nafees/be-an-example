@@ -6,13 +6,14 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import { useProducts } from "@/hooks/use-products";
 import { useAdminOrders, computeMetrics, revenueByDay } from "@/hooks/use-admin-data";
 import { Link } from "react-router-dom";
+import { formatCurrency } from "@/lib/currency";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
     return (
       <div className="bg-background border border-border rounded-md px-3 py-2 shadow-lg">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold text-foreground">${Number(payload[0].value).toFixed(2)}</p>
+        <p className="text-sm font-semibold text-foreground">{formatCurrency(Number(payload[0].value))}</p>
       </div>
     );
   }
@@ -35,7 +36,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Revenue" value={metrics.totalRevenue} prefix="$" decimals={2} growth={metrics.revenueGrowth} icon={DollarSign} index={0} />
+        <MetricCard label="Revenue" value={metrics.totalRevenue} currencyCode="gbp" decimals={2} growth={metrics.revenueGrowth} icon={DollarSign} index={0} />
         <MetricCard label="Orders" value={metrics.totalOrders} growth={metrics.orderGrowth} icon={ShoppingCart} index={1} />
         <MetricCard label="Customers" value={metrics.totalCustomers} growth={0} icon={Users} index={2} />
         <MetricCard label="Products" value={products.length} growth={0} icon={TrendingUp} index={3} />
@@ -54,7 +55,7 @@ export default function AdminDashboard() {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} tickFormatter={(v) => `$${v}`} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} tickFormatter={(v) => formatCurrency(Number(v))} />
                 <Tooltip content={<CustomTooltip />} />
                 <Area type="monotone" dataKey="revenue" stroke="hsl(0,0%,0%)" strokeWidth={1.5} fill="url(#revenueGrad)" />
               </AreaChart>
@@ -80,7 +81,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="text-right flex items-center gap-3">
                   <StatusBadge status={order.status} />
-                  <span className="text-sm font-medium text-foreground/60">${Number(order.total).toFixed(2)}</span>
+                  <span className="text-sm font-medium text-foreground/60">{formatCurrency(Number(order.total))}</span>
                 </div>
               </div>
             ))}
@@ -99,7 +100,7 @@ export default function AdminDashboard() {
               <img src={product.image} alt={product.name} className="w-10 h-10 rounded object-cover" />
                 <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground/80 truncate">{product.name}</p>
-                <p className="text-xs text-muted-foreground">${Number(product.price).toFixed(2)} · {product.stock} in stock</p>
+                <p className="text-xs text-muted-foreground">{formatCurrency(Number(product.price))} · {product.stock} in stock</p>
               </div>
             </div>
           ))}

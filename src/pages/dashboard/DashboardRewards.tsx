@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Truck, Gift, Crown, Lock } from "lucide-react";
 import { getTier, type MemberTier } from "@/components/dashboard/DashboardLayout";
 import PageHeader from "./_PageHeader";
+import { formatCurrency } from "@/lib/currency";
 
 type Ctx = { totalSpend: number; tier: MemberTier };
 
@@ -16,7 +17,7 @@ const TIERS: { name: MemberTier; min: number; perks: string[] }[] = [
 const REWARDS = [
   { icon: Truck, title: "Free shipping credit", cost: 500, desc: "On your next order." },
   { icon: Gift, title: "Mystery member gift", cost: 1000, desc: "A signed piece from the archive." },
-  { icon: Sparkles, title: "$50 credit", cost: 2000, desc: "Apply at checkout." },
+  { icon: Sparkles, title: "£50 credit", cost: 2000, desc: "Apply at checkout." },
   { icon: Crown, title: "Private styling session", cost: 5000, desc: "30 minutes with our team." },
 ];
 
@@ -36,14 +37,14 @@ export default function DashboardRewards() {
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-background/60 mb-3">Current tier</p>
             <h2 className="text-5xl md:text-7xl font-black tracking-tight">{tier}</h2>
-            <p className="mt-3 text-background/70 text-sm">{points.toLocaleString()} points · ${totalSpend.toFixed(2)} lifetime</p>
+            <p className="mt-3 text-background/70 text-sm">{points.toLocaleString()} points · {formatCurrency(totalSpend)} lifetime</p>
           </div>
           <div>
             {next ? (
               <>
                 <div className="flex items-baseline justify-between mb-2">
                   <span className="text-[10px] tracking-[0.3em] uppercase text-background/60">Progress to {next}</span>
-                  <span className="text-xs text-background/80">${toNext.toFixed(2)} away</span>
+                  <span className="text-xs text-background/80">{formatCurrency(toNext)} away</span>
                 </div>
                 <div className="h-1.5 bg-background/15 rounded-full overflow-hidden">
                   <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 1.2, ease: "easeOut" }} className="h-full bg-accent" />
@@ -75,7 +76,7 @@ export default function DashboardRewards() {
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className={`text-[10px] tracking-[0.25em] uppercase ${current ? "text-background/60" : "text-muted-foreground"}`}>
-                    ${t.min.toLocaleString()}+
+                    {formatCurrency(t.min)}+
                   </span>
                   {!reached && <Lock size={12} className="text-muted-foreground" />}
                 </div>

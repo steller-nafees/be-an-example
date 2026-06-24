@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import StatusBadge from "@/components/admin/StatusBadge";
 import ModalPortal from "@/components/ModalPortal";
+import { formatCurrency } from "@/lib/currency";
 
 const statusFilters = ["all", "pending", "processing", "shipped", "delivered", "cancelled"] as const;
 const statusOptions = ["pending", "processing", "shipped", "delivered", "cancelled"] as const;
@@ -235,7 +236,7 @@ export default function AdminOrders() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium text-foreground/80">
-                      ${Number(order.total).toFixed(2)}
+                      {formatCurrency(Number(order.total))}
                     </td>
                   </motion.tr>
                 ))}
@@ -367,7 +368,7 @@ export default function AdminOrders() {
                           </p>
                         </div>
                         <span className="text-sm font-medium text-foreground/70">
-                          ${(Number(item.price) * item.quantity).toFixed(2)}
+                          {formatCurrency(Number(item.price) * item.quantity)}
                         </span>
                       </div>
                     ))}
@@ -376,7 +377,7 @@ export default function AdminOrders() {
 
                 <div className="flex items-center justify-between pt-4 border-t border-border">
                   <span className="text-sm font-medium text-muted-foreground">Total</span>
-                  <span className="text-lg font-bold text-foreground">${Number(selected.total).toFixed(2)}</span>
+                  <span className="text-lg font-bold text-foreground">{formatCurrency(Number(selected.total))}</span>
                 </div>
               </div>
             </motion.div>

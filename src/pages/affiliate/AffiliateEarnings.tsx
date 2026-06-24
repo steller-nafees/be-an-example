@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { useMyAffiliate, useMyCommissions, computeEarnings } from "@/hooks/use-affiliate";
+import { formatCurrency } from "@/lib/currency";
 
 export default function AffiliateEarnings() {
   const { data: affiliate, isLoading } = useMyAffiliate();
@@ -26,7 +27,7 @@ export default function AffiliateEarnings() {
         ].map((item) => (
           <motion.div key={item.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-background border border-border rounded-lg p-4 text-center">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</p>
-            <p className={`text-2xl font-bold mt-1 ${item.color}`}>${item.value.toFixed(2)}</p>
+            <p className={`text-2xl font-bold mt-1 ${item.color}`}>{formatCurrency(item.value)}</p>
           </motion.div>
         ))}
       </div>
@@ -55,8 +56,8 @@ export default function AffiliateEarnings() {
                 <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/50">
                   <td className="px-5 py-3 font-medium text-foreground/80">{c.order_id ? `ORD-${c.order_id.slice(0, 8).toUpperCase()}` : "—"}</td>
                   <td className="px-5 py-3 text-muted-foreground">{c.orders ? ([c.orders.first_name, c.orders.last_name].filter(Boolean).join(" ") || c.orders.email) : "—"}</td>
-                  <td className="px-5 py-3 text-foreground/70">${c.orders ? Number(c.orders.total).toFixed(2) : "—"}</td>
-                  <td className="px-5 py-3 font-medium text-foreground">${Number(c.amount).toFixed(2)}</td>
+                  <td className="px-5 py-3 text-foreground/70">{c.orders ? formatCurrency(Number(c.orders.total)) : "—"}</td>
+                  <td className="px-5 py-3 font-medium text-foreground">{formatCurrency(Number(c.amount))}</td>
                   <td className="px-5 py-3"><StatusBadge status={c.status === "approved" ? "delivered" : c.status === "paid" ? "delivered" : "pending"} /></td>
                   <td className="px-5 py-3 text-muted-foreground">{c.created_at.slice(0, 10)}</td>
                 </tr>

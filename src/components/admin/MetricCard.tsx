@@ -1,21 +1,38 @@
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useEffect } from "react";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 export interface MetricCardProps {
   label: string;
   value: number;
   prefix?: string;
   suffix?: string;
+  currencyCode?: string;
   growth?: number;
   decimals?: number;
   icon: LucideIcon;
   index: number;
 }
 
-function AnimatedNumber({ value, prefix = "", suffix = "", decimals = 0 }: { value: number; prefix?: string; suffix?: string; decimals?: number }) {
+function AnimatedNumber({
+  value,
+  prefix = "",
+  suffix = "",
+  decimals = 0,
+  currencyCode,
+}: {
+  value: number;
+  prefix?: string;
+  suffix?: string;
+  decimals?: number;
+  currencyCode?: string;
+}) {
   const count = useMotionValue(0);
   const display = useTransform(count, (v) => {
+    if (currencyCode) {
+      return formatCurrency(v, currencyCode);
+    }
     const formatted = Number(v.toFixed(decimals)).toLocaleString(undefined, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
@@ -31,7 +48,17 @@ function AnimatedNumber({ value, prefix = "", suffix = "", decimals = 0 }: { val
   return <motion.span>{display}</motion.span>;
 }
 
-export default function MetricCard({ label, value, prefix, suffix, growth, decimals = 0, icon: Icon, index }: MetricCardProps) {
+export default function MetricCard({
+  label,
+  value,
+  prefix,
+  suffix,
+  currencyCode,
+  growth,
+  decimals = 0,
+  icon: Icon,
+  index,
+}: MetricCardProps) {
   const isPositive = (growth ?? 0) >= 0;
 
   return (
@@ -48,7 +75,7 @@ export default function MetricCard({ label, value, prefix, suffix, growth, decim
         </div>
       </div>
       <div className="text-2xl font-bold tracking-tight text-foreground">
-        <AnimatedNumber value={value} prefix={prefix} suffix={suffix} decimals={decimals} />
+        <AnimatedNumber value={value} prefix={prefix} suffix={suffix} decimals={decimals} currencyCode={currencyCode} />
       </div>
       {growth !== undefined && (
         <div className="flex items-center gap-1 mt-2">

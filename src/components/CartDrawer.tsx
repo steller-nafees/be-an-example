@@ -4,6 +4,7 @@ import { X, Minus, Plus, ShoppingBag, Tag, ChevronDown, ChevronUp } from "lucide
 import { useCart } from "@/context/CartContext";
 import { Link } from "react-router-dom";
 import { previewCouponDiscount, type CouponPreview } from "@/lib/coupons";
+import { formatCurrency } from "@/lib/currency";
 
 function QuantitySelector({ quantity, onUpdate }: { quantity: number; onUpdate: (q: number) => void }) {
   return (
@@ -253,7 +254,7 @@ export default function CartDrawer() {
                               animate={{ opacity: 1 }}
                               className="text-sm font-bold text-foreground"
                             >
-                              ${(item.price * item.quantity).toFixed(2)}
+                              {formatCurrency(item.price * item.quantity)}
                             </motion.span>
                           </div>
                         </div>
@@ -336,7 +337,7 @@ export default function CartDrawer() {
                             animate={{ opacity: 1 }}
                             className="text-xs text-foreground font-medium mb-3"
                           >
-                            Coupon applied{couponPreview.discountAmount > 0 ? ` • saved $${couponPreview.discountAmount.toFixed(2)}` : ""}
+                            Coupon applied{couponPreview.discountAmount > 0 ? ` • saved ${formatCurrency(couponPreview.discountAmount)}` : ""}
                           </motion.p>
                         ) : null}
                         {couponPreview?.valid && (
@@ -362,18 +363,18 @@ export default function CartDrawer() {
                 <div className="px-6 pb-2 space-y-1.5">
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Subtotal</span>
-                    <span>${totalPrice.toFixed(2)}</span>
+                    <span>{formatCurrency(totalPrice)}</span>
                   </div>
                   {couponPreview?.valid && couponPreview.discountAmount > 0 && (
                     <div className="flex justify-between text-xs text-foreground">
                       <span>Coupon {couponPreview.code ?? couponCode}</span>
-                      <span>- ${couponPreview.discountAmount.toFixed(2)}</span>
+                      <span>- {formatCurrency(couponPreview.discountAmount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Merchandise total</span>
                     <span>
-                      ${(Math.max(totalPrice - (couponPreview?.valid ? couponPreview.discountAmount : 0), 0)).toFixed(2)}
+                      {formatCurrency(Math.max(totalPrice - (couponPreview?.valid ? couponPreview.discountAmount : 0), 0))}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground">
@@ -387,7 +388,7 @@ export default function CartDrawer() {
                       initial={{ scale: 1.1 }}
                       animate={{ scale: 1 }}
                     >
-                      ${(Math.max(totalPrice - (couponPreview?.valid ? couponPreview.discountAmount : 0), 0)).toFixed(2)}
+                      {formatCurrency(Math.max(totalPrice - (couponPreview?.valid ? couponPreview.discountAmount : 0), 0))}
                     </motion.span>
                   </div>
                 </div>

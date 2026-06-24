@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { formatCurrency } from "@/lib/currency";
 
 export type CouponDiscountType = "percentage" | "fixed";
 
@@ -64,6 +65,5 @@ export async function previewCouponDiscount(
 
 export function formatCouponValue(type: CouponDiscountType, value: number) {
   if (type === "percentage") return `${value.toFixed(0)}% off`;
-  return `$${value.toFixed(2)} off`;
+  return `${formatCurrency(value)} off`;
 }
-

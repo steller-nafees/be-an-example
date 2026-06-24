@@ -6,13 +6,16 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import { useMyAffiliate, useMyCommissions, useMyClicks, computeEarnings } from "@/hooks/use-affiliate";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { formatCurrency } from "@/lib/currency";
 
-const ChartTooltip = ({ active, payload, label }: any) => {
+const ChartTooltip = ({ active, payload, label, prefix = "" }: any) => {
   if (active && payload?.length) {
     return (
       <div className="bg-background border border-border rounded-md px-3 py-2 shadow-lg">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold text-foreground">${payload[0].value}</p>
+        <p className="text-sm font-semibold text-foreground">
+          {prefix ? `${prefix}${Number(payload[0].value).toLocaleString()}` : Number(payload[0].value).toLocaleString()}
+        </p>
       </div>
     );
   }
@@ -64,8 +67,8 @@ export default function AffiliateOverview() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Total Earnings" value={earnings.total} prefix="$" decimals={2} growth={0} icon={DollarSign} index={0} />
-        <MetricCard label="Pending" value={earnings.pending} prefix="$" decimals={2} growth={0} icon={TrendingUp} index={1} />
+        <MetricCard label="Total Earnings" value={earnings.total} currencyCode="gbp" decimals={2} growth={0} icon={DollarSign} index={0} />
+        <MetricCard label="Pending" value={earnings.pending} currencyCode="gbp" decimals={2} growth={0} icon={TrendingUp} index={1} />
         <MetricCard label="Clicks" value={clicks.length} growth={0} icon={MousePointerClick} index={2} />
         <MetricCard label="Conversions" value={commissions.length} growth={0} icon={ShoppingBag} index={3} />
       </div>
@@ -83,8 +86,8 @@ export default function AffiliateOverview() {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} tickFormatter={(v) => `$${v}`} />
-                <Tooltip content={<ChartTooltip />} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} tickFormatter={(v) => formatCurrency(Number(v))} />
+                <Tooltip content={<ChartTooltip prefix="£" />} />
                 <Area type="monotone" dataKey="earnings" stroke="hsl(0,0%,0%)" strokeWidth={1.5} fill="url(#earningsGrad)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -105,7 +108,7 @@ export default function AffiliateOverview() {
                 </div>
                 <div className="text-right flex items-center gap-3">
                   <StatusBadge status={c.status === "approved" ? "delivered" : c.status === "paid" ? "delivered" : "pending"} />
-                  <span className="text-sm font-medium text-foreground/60">${Number(c.amount).toFixed(2)}</span>
+                  <span className="text-sm font-medium text-foreground/60">{formatCurrency(Number(c.amount))}</span>
                 </div>
               </div>
             ))}

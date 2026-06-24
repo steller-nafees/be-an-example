@@ -7,6 +7,7 @@ import { useMyAffiliate, useMyCommissions, useMyPayouts, computeEarnings } from 
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatCurrency } from "@/lib/currency";
 
 export default function AffiliatePayouts() {
   const { data: affiliate, isLoading } = useMyAffiliate();
@@ -62,15 +63,15 @@ export default function AffiliatePayouts() {
         <div className="grid sm:grid-cols-3 gap-6">
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Available</p>
-            <p className="text-3xl font-bold text-foreground mt-1">${available.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-foreground mt-1">{formatCurrency(available)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Paid</p>
-            <p className="text-3xl font-bold text-green-600 mt-1">${earnings.paid.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-green-600 mt-1">{formatCurrency(earnings.paid)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Minimum Payout</p>
-            <p className="text-3xl font-bold text-foreground/50 mt-1">$50</p>
+            <p className="text-3xl font-bold text-foreground/50 mt-1">{formatCurrency(50)}</p>
           </div>
         </div>
       </motion.div>
@@ -98,7 +99,7 @@ export default function AffiliatePayouts() {
               {payouts.map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/50">
                   <td className="px-5 py-3 font-medium text-foreground/80">{p.id.slice(0, 8).toUpperCase()}</td>
-                  <td className="px-5 py-3 font-semibold text-foreground">${Number(p.amount).toFixed(2)}</td>
+                  <td className="px-5 py-3 font-semibold text-foreground">{formatCurrency(Number(p.amount))}</td>
                   <td className="px-5 py-3 text-muted-foreground capitalize">{p.method === "bank" ? "Bank Transfer" : "PayPal"}</td>
                   <td className="px-5 py-3"><StatusBadge status={p.status === "processed" ? "delivered" : p.status === "rejected" ? "cancelled" : "pending"} /></td>
                   <td className="px-5 py-3 text-muted-foreground">{p.requested_at.slice(0, 10)}</td>
@@ -124,7 +125,7 @@ export default function AffiliatePayouts() {
               </div>
               <div className="mb-4">
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Amount</p>
-                <p className="text-3xl font-bold text-foreground">${available.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-foreground">{formatCurrency(available)}</p>
               </div>
               <div className="mb-6">
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Payout Method</p>

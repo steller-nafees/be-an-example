@@ -4,13 +4,14 @@ import { useAdminOrders, computeMetrics, revenueByDay } from "@/hooks/use-admin-
 import { useProducts } from "@/hooks/use-products";
 import { useMemo } from "react";
 import { useOrderItemsWithCosts, computeProfitabilityMetrics } from "@/lib/admin-data";
+import { formatCurrency } from "@/lib/currency";
 
 const ChartTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
     return (
       <div className="bg-background border border-border rounded-md px-3 py-2 shadow-lg">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold text-foreground">{payload[0].value.toLocaleString()}</p>
+        <p className="text-sm font-semibold text-foreground">{formatCurrency(Number(payload[0].value))}</p>
       </div>
     );
   }
@@ -51,7 +52,7 @@ export default function AdminAnalytics() {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} tickFormatter={(v) => `$${v}`} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(0,0%,45%)", fontSize: 11 }} tickFormatter={(v) => formatCurrency(Number(v))} />
                 <Tooltip content={<ChartTooltip />} />
                 <Area type="monotone" dataKey="revenue" stroke="hsl(0,0%,0%)" strokeWidth={1.5} fill="url(#aGrad)" />
               </AreaChart>
@@ -77,9 +78,9 @@ export default function AdminAnalytics() {
           <h2 className="text-sm font-semibold text-foreground/70 mb-6">Period Summary</h2>
           <div className="grid sm:grid-cols-4 gap-5">
             {[
-              { label: "Total Revenue", value: `$${metrics.totalRevenue.toFixed(2)}` },
+              { label: "Total Revenue", value: formatCurrency(metrics.totalRevenue) },
               { label: "Total Orders", value: metrics.totalOrders.toString() },
-              { label: "Avg Order", value: metrics.totalOrders ? `$${(metrics.totalRevenue / metrics.totalOrders).toFixed(2)}` : "$0" },
+              { label: "Avg Order", value: metrics.totalOrders ? formatCurrency(metrics.totalRevenue / metrics.totalOrders) : formatCurrency(0) },
               { label: "Customers", value: metrics.totalCustomers.toString() },
             ].map((item) => (
               <div key={item.label}>
@@ -92,9 +93,9 @@ export default function AdminAnalytics() {
                     <h2 className="text-sm font-semibold text-foreground/70 mb-6">Profitability & Margins</h2>
                     <div className="grid sm:grid-cols-4 gap-5">
                       {[
-                        { label: "Total Revenue", value: `$${profitability.totalRevenue.toFixed(2)}` },
-                        { label: "Total Cost", value: `$${profitability.totalCost.toFixed(2)}` },
-                        { label: "Gross Profit", value: `$${profitability.grossProfit.toFixed(2)}` },
+                        { label: "Total Revenue", value: formatCurrency(profitability.totalRevenue) },
+                        { label: "Total Cost", value: formatCurrency(profitability.totalCost) },
+                        { label: "Gross Profit", value: formatCurrency(profitability.grossProfit) },
                         { label: "Margin %", value: `${profitability.marginPercentage.toFixed(2)}%` },
                       ].map((item) => (
                         <div key={item.label}>

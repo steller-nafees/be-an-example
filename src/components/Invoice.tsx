@@ -3,6 +3,7 @@ import { Building2, Calendar, Mail, MapPin, Phone } from "lucide-react";
 import { useLogo } from "@/context/LogoContext";
 import BrandLogo from "@/components/BrandLogo";
 import type { Order } from "@/context/OrderContext";
+import { formatCurrency } from "@/lib/currency";
 
 interface InvoiceProps {
   order: Order;
@@ -103,9 +104,9 @@ export default function Invoice({ order }: InvoiceProps) {
                 <td className="py-3 px-4 text-gray-900">{item.name}</td>
                 <td className="py-3 px-4 text-center text-gray-600">{item.size}</td>
                 <td className="py-3 px-4 text-center text-gray-600">{item.quantity}</td>
-                <td className="py-3 px-4 text-right text-gray-900">${item.price.toFixed(2)}</td>
+                <td className="py-3 px-4 text-right text-gray-900">{formatCurrency(item.price)}</td>
                 <td className="py-3 px-4 text-right text-gray-900 font-medium">
-                  ${(item.price * item.quantity).toFixed(2)}
+                  {formatCurrency(item.price * item.quantity)}
                 </td>
               </tr>
             ))}
@@ -119,27 +120,27 @@ export default function Invoice({ order }: InvoiceProps) {
           <div className="space-y-2 border-t-2 border-gray-300 pt-4">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal</span>
-              <span className="text-gray-900">${order.subtotal.toFixed(2)}</span>
+              <span className="text-gray-900">{formatCurrency(order.subtotal)}</span>
             </div>
             {order.discountAmount && order.discountAmount > 0 ? (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">
                   Coupon{order.couponCode ? ` (${order.couponCode})` : ""}
                 </span>
-                <span className="text-gray-900">- ${order.discountAmount.toFixed(2)}</span>
+                <span className="text-gray-900">- {formatCurrency(order.discountAmount)}</span>
               </div>
             ) : null}
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">{shippingFeeLabel}</span>
-              <span className="text-gray-900">${order.deliveryFee.toFixed(2)}</span>
+              <span className="text-gray-900">{formatCurrency(order.deliveryFee)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Tax (10%)</span>
-              <span className="text-gray-900">${order.tax.toFixed(2)}</span>
+              <span className="text-gray-900">{formatCurrency(order.tax)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold border-t border-gray-300 pt-3">
               <span className="text-gray-900">Total</span>
-              <span className="text-gray-900">${order.total.toFixed(2)}</span>
+              <span className="text-gray-900">{formatCurrency(order.total)}</span>
             </div>
           </div>
         </div>

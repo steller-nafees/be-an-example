@@ -5,6 +5,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useCart } from "@/context/CartContext";
 import { useProducts } from "@/hooks/use-products";
 import PageHeader from "./_PageHeader";
+import { formatCurrency } from "@/lib/currency";
 
 export default function DashboardWishlist() {
   const { items, toggle } = useWishlist();
@@ -66,7 +67,7 @@ export default function DashboardWishlist() {
               </Link>
               <div className="mt-3 flex items-baseline justify-between">
                 <h3 className="text-sm font-semibold tracking-wide truncate pr-2">{p.name}</h3>
-                <span className="text-sm">${p.price}</span>
+                <span className="text-sm">{formatCurrency(p.price)}</span>
               </div>
             </motion.div>
           ))}
