@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Check, CreditCard, Truck, MapPin, ClipboardList, Loader2, ShieldCheck, Lock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import Invoice from "@/components/Invoice";
 import InvoiceDownloadButton from "@/components/InvoiceDownload";
@@ -79,22 +79,12 @@ function validateStep0(shipping: {
   return null;
 }
 
-function validateStep2(payment: {
-  cardName: string; cardNumber: string; expiry: string; cvc: string;
-}): string | null {
-  if (!payment.cardName.trim()) return "Cardholder name is required.";
-  const digits = payment.cardNumber.replace(/\s/g, "");
-  if (digits.length < 13) return "Enter a valid card number.";
-  if (payment.expiry.replace(/\s/g, "").length < 5) return "Enter a valid expiry date.";
-  if (payment.cvc.length < 3) return "Enter a valid CVC.";
-  return null;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart, couponCode } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
   const { settings } = useBrandSettings();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -102,13 +92,12 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [stripeHandled, setStripeHandled] = useState(false);
 
   const [shipping, setShipping] = useState({
     firstName: "", lastName: "", email: "", phone: "", address: "", city: "", state: "", zip: "", country: "US",
   });
   const [deliveryMethod, setDeliveryMethod] = useState("standard");
-  const [paymentMethod, setPaymentMethod] = useState("card");
-  const [payment, setPayment] = useState({ cardNumber: "", expiry: "", cvc: "", cardName: "" });
   const [couponPreview, setCouponPreview] = useState<CouponPreview | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
 
@@ -155,6 +144,123 @@ export default function CheckoutPage() {
     };
   }, [couponCode, items, totalPrice]);
 
+  const stripeStatus = new URLSearchParams(location.search).get("stripe_status");
+  const stripeSessionId = new URLSearchParams(location.search).get("session_id");
+
+  useEffect(() => {
+    if (stripeStatus !== "cancelled") return;
+    toast({
+      title: "Checkout canceled",
+      description: "Your Stripe test checkout was canceled. Your cart is still saved.",
+      variant: "destructive",
+    });
+    window.history.replaceState({}, "", window.location.pathname);
+  }, [stripeStatus]);
+
+  useEffect(() => {
+    if (stripeHandled || orderPlaced) return;
+    if (stripeStatus !== "success" || !stripeSessionId) return;
+    if (authLoading) return;
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to finish your Stripe order.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let active = true;
+
+    const finalizeStripeCheckout = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("stripe-finalize-checkout", {
+          body: { sessionId: stripeSessionId },
+        });
+
+        if (error) {
+          throw new Error(error.message || "Unable to verify the Stripe payment.");
+        }
+
+        const orderRow = data?.order;
+        if (!orderRow) {
+          throw new Error("Stripe payment was verified, but the order could not be loaded.");
+        }
+
+        const orderItems = Array.isArray(data?.orderItems) ? data.orderItems : [];
+        const createdLocalOrder: Order = {
+          id: orderRow.id,
+          formattedId: orderRow.formatted_id ?? "BAEO-0000",
+          customerInfo: {
+            firstName: orderRow.first_name || "",
+            lastName: orderRow.last_name || "",
+            email: orderRow.email || "",
+            phone: orderRow.phone || "",
+            address: orderRow.address || "",
+            city: orderRow.city || "",
+            state: orderRow.state || "",
+            zip: orderRow.zip || "",
+          },
+          items: orderItems.map((item: any) => ({
+            id: item.product_id,
+            variantId: item.variant_id ?? undefined,
+            printfulSyncVariantId: item.printful_sync_variant_id ?? null,
+            name: item.name,
+            price: Number(item.price || 0),
+            size: item.size || "",
+            color: item.color || "",
+            image: item.image || "",
+            quantity: Number(item.quantity || 1),
+          })),
+          shippingMethod: (orderRow.shipping_method || "standard") as "standard" | "express" | "overnight",
+          deliveryFee: Number(orderRow.delivery_fee || 0),
+          subtotal: Number(orderRow.subtotal || 0),
+          tax: Number(orderRow.tax || 0),
+          total: Number(orderRow.total || 0),
+          date: orderRow.created_at ?? new Date().toISOString(),
+          status: (orderRow.status || "pending") as "pending" | "processing" | "shipped" | "delivered",
+          couponCode: orderRow.coupon_code ?? null,
+          couponTitle: orderRow.coupon_title ?? null,
+          discountAmount: Number(orderRow.discount_amount || 0),
+        };
+
+        if (!active) return;
+
+        const { error: printfulErr } = await supabase.functions.invoke("printful-submit-order", {
+          body: { orderId: orderRow.id },
+        });
+
+        if (printfulErr) {
+          toast({
+            title: "Order saved",
+            description: "Stripe payment completed, but Printful automation still needs attention.",
+          });
+        }
+
+        setCreatedOrder(createdLocalOrder);
+        setOrderPlaced(true);
+        clearCart();
+        setStripeHandled(true);
+        window.history.replaceState({}, "", window.location.pathname);
+      } catch (err: any) {
+        toast({
+          title: "Stripe checkout could not be completed",
+          description: err?.message || "Please try the checkout again.",
+          variant: "destructive",
+        });
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    finalizeStripeCheckout();
+
+    return () => {
+      active = false;
+    };
+  }, [authLoading, clearCart, location.search, orderPlaced, stripeHandled, stripeSessionId, stripeStatus, user]);
+
   const goTo = (newStep: number) => {
     setDirection(newStep > step ? 1 : -1);
     setStep(newStep);
@@ -187,32 +293,13 @@ export default function CheckoutPage() {
   const handleCountryChange = (country: string) =>
     setShipping((s) => ({ ...s, country, phone: formatPhoneForCountry(country, s.phone) }));
 
-  const formatCardNumber = (raw: string) =>
-    raw.replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim();
-
-  const formatExpiry = (raw: string) => {
-    const digits = raw.replace(/\D/g, "").slice(0, 4);
-    if (digits.length <= 2) return digits;
-    return `${digits.slice(0, 2)} / ${digits.slice(2)}`;
-  };
-
-  const handleCardNumberChange = (val: string) =>
-    setPayment((p) => ({ ...p, cardNumber: formatCardNumber(val) }));
-  const handleExpiryChange = (val: string) =>
-    setPayment((p) => ({ ...p, expiry: formatExpiry(val) }));
-
   const next = async () => {
     // ── Validate before advancing ──────────────────────────────────────────
     if (step === 0) {
       const err = validateStep0(shipping);
       if (err) { toast({ title: "Incomplete details", description: err, variant: "destructive" }); return; }
     }
-
-    if (step === 2) {
-      const err = validateStep2(payment);
-      if (err) { toast({ title: "Payment details incomplete", description: err, variant: "destructive" }); return; }
-    }
-    // Step 1 (delivery) always has a default selected, so no validation needed.
+    // Step 1 (delivery) and Step 2 (Stripe test checkout info) always have defaults or informational content only.
     // ──────────────────────────────────────────────────────────────────────
 
     if (step < 3) {
@@ -306,38 +393,24 @@ export default function CheckoutPage() {
       return;
     }
 
-    const { error: printfulErr } = await supabase.functions.invoke("printful-submit-order", {
-      body: { orderId: dbOrder.id },
+    const { data: stripeSession, error: stripeErr } = await supabase.functions.invoke("stripe-create-checkout-session", {
+      body: {
+        orderId: dbOrder.id,
+        origin: window.location.origin,
+      },
     });
 
-    if (printfulErr) {
+    if (stripeErr || !stripeSession?.url) {
       toast({
-        title: "Order saved",
-        description: "Printful automation needs attention in admin before fulfillment can continue.",
+        title: "Stripe checkout could not be started",
+        description: stripeErr?.message || "Unable to create the test checkout session.",
+        variant: "destructive",
       });
+      setLoading(false);
+      return;
     }
 
-    const createdLocalOrder: Order = {
-      id: dbOrder.id,
-      formattedId: dbOrder.formatted_id ?? `BAEO-0000`,
-      customerInfo: shipping,
-      items,
-      shippingMethod: "standard",
-      deliveryFee: deliveryCost,
-      subtotal: totalPrice,
-      tax: orderTax,
-      total: grandTotal,
-      date: new Date().toISOString(),
-      status: "pending",
-      couponCode: couponDetails?.valid ? couponDetails.code ?? couponCode : null,
-      couponTitle: couponDetails?.valid ? couponDetails.title ?? null : null,
-      discountAmount: orderDiscount,
-    };
-
-    setCreatedOrder(createdLocalOrder);
-    setLoading(false);
-    setOrderPlaced(true);
-    clearCart();
+    window.location.assign(stripeSession.url);
   };
 
   const back = () => { if (step > 0) goTo(step - 1); };
@@ -560,42 +633,34 @@ export default function CheckoutPage() {
                   {step === 2 && (
                     <div className="space-y-4 sm:space-y-5">
                       <h2 className="text-xs sm:text-sm font-bold tracking-widest uppercase text-foreground mb-4 sm:mb-6">Payment Method</h2>
-                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
-                        {[
-                          { id: "card", label: "Card", icon: <CreditCard size={16} /> },
-                          { id: "apple", label: "Apple Pay", icon: null },
-                          { id: "google", label: "Google Pay", icon: null },
-                        ].map((pm) => (
-                          <motion.button
-                            key={pm.id}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => pm.id === "card" && setPaymentMethod(pm.id)}
-                            className={`flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all ${paymentMethod === pm.id
-                              ? "border-foreground bg-foreground text-primary-foreground"
-                              : "border-border text-muted-foreground hover:border-foreground/30 bg-background"
-                              } ${pm.id !== "card" ? "opacity-50 cursor-not-allowed" : ""}`}
-                            disabled={pm.id !== "card"}
-                          >
-                            {pm.icon}
-                            {pm.label}
-                          </motion.button>
-                        ))}
-                      </div>
-                      <FloatingInput label="Cardholder name" value={payment.cardName} onChange={(v) => setPayment({ ...payment, cardName: v })} />
-                      <FloatingInput label="Card number" value={payment.cardNumber} onChange={handleCardNumberChange} placeholder="1234 5678 9012 3456" />
-                      <div className="grid grid-cols-2 gap-4">
-                        <FloatingInput label="Expiry" value={payment.expiry} onChange={handleExpiryChange} placeholder="MM / YY" />
-                        <FloatingInput label="CVC" value={payment.cvc} onChange={(v) => setPayment({ ...payment, cvc: v.replace(/\D/g, "").slice(0, 4) })} placeholder="123" />
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                        <Lock size={12} className="flex-shrink-0" />
-                        <span className="text-xs sm:text-sm">Your payment info is encrypted and secure</span>
+                      <div className="rounded-3xl border border-border bg-background/70 p-5 sm:p-6 shadow-sm space-y-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-foreground text-primary-foreground flex items-center justify-center flex-shrink-0">
+                            <CreditCard size={16} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground">Stripe test checkout</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Your payment will be completed on Stripe's secure checkout page. Use a Stripe test card there.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground space-y-2">
+                          <p className="font-medium text-foreground">Test card for Stripe Checkout</p>
+                          <p>Card number: 4242 4242 4242 4242</p>
+                          <p>Expiry: any future date</p>
+                          <p>CVC: any 3 digits</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Lock size={12} className="flex-shrink-0" />
+                          <span>We only create a pending order here. Stripe confirms payment before fulfillment starts.</span>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {/* Step 3: Review */}
-                {step === 3 && (
+                  {step === 3 && (
                     <div className="space-y-3 sm:space-y-5">
                       <h2 className="text-xs sm:text-sm font-bold tracking-widest uppercase text-foreground mb-4 sm:mb-6">Review Order</h2>
                       {(couponLoading || couponPreview?.valid) && (
@@ -644,9 +709,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <CreditCard size={14} className="text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">
-                            •••• {payment.cardNumber.slice(-4) || "••••"}
-                          </p>
+                          <p className="text-sm text-muted-foreground">Stripe Checkout, test mode</p>
                         </div>
                       </div>
 
@@ -694,7 +757,7 @@ export default function CheckoutPage() {
                   ) : step === 3 ? (
                     <>
                       <ShieldCheck size={14} />
-                      Place Order — ${total.toFixed(2)}
+                      Continue to Stripe — ${total.toFixed(2)}
                     </>
                   ) : (
                     "Continue"
@@ -704,7 +767,7 @@ export default function CheckoutPage() {
 
               {step === 3 && (
                 <p className="text-xs sm:text-sm text-muted-foreground text-center mt-4 flex items-center justify-center gap-2">
-                  <Lock size={12} className="flex-shrink-0" /> Secure checkout — your data is protected
+                  <Lock size={12} className="flex-shrink-0" /> Secure Stripe test checkout - no real money is charged
                 </p>
               )}
             </div>
