@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Check, CreditCard, Truck, MapPin, ClipboardList, Loader2, ShieldCheck, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useBrandSettings } from "@/context/LogoContext";
 import { getReferralCode } from "@/hooks/use-referral-tracking";
 import { toast } from "@/hooks/use-toast";
+import { previewCouponDiscount, type CouponPreview } from "@/lib/coupons";
 
 const steps = [
   { label: "Shipping", icon: MapPin },
@@ -92,7 +93,7 @@ function validateStep2(payment: {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice, clearCart, couponCode } = useCart();
   const { user } = useAuth();
   const { settings } = useBrandSettings();
   const [step, setStep] = useState(0);
@@ -108,9 +109,51 @@ export default function CheckoutPage() {
   const [deliveryMethod, setDeliveryMethod] = useState("standard");
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [payment, setPayment] = useState({ cardNumber: "", expiry: "", cvc: "", cardName: "" });
+  const [couponPreview, setCouponPreview] = useState<CouponPreview | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
 
   const deliveryCost = 0;
-  const total = totalPrice + deliveryCost;
+  const discountAmount = couponPreview?.valid ? couponPreview.discountAmount : 0;
+  const discountedSubtotal = Math.max(totalPrice - discountAmount, 0);
+  const tax = discountedSubtotal * 0.1;
+  const total = discountedSubtotal + deliveryCost + tax;
+
+  useEffect(() => {
+    let active = true;
+    if (!couponCode || items.length === 0) {
+      setCouponPreview(null);
+      setCouponLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    setCouponLoading(true);
+    previewCouponDiscount(
+      couponCode,
+      items.map((item) => ({
+        product_id: item.id,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      totalPrice,
+    )
+      .then((preview) => {
+        if (!active) return;
+        setCouponPreview(preview);
+      })
+      .catch(() => {
+        if (!active) return;
+        setCouponPreview(null);
+      })
+      .finally(() => {
+        if (active) setCouponLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [couponCode, items, totalPrice]);
 
   const goTo = (newStep: number) => {
     setDirection(newStep > step ? 1 : -1);
@@ -179,8 +222,6 @@ export default function CheckoutPage() {
 
     // ── Place order ────────────────────────────────────────────────────────
     setLoading(true);
-    const tax = totalPrice * 0.1;
-    const grandTotal = totalPrice + deliveryCost + tax;
     const affiliateCode = getReferralCode();
 
     if (!user) {
@@ -188,6 +229,45 @@ export default function CheckoutPage() {
       setLoading(false);
       return;
     }
+
+    let couponDetails = couponPreview;
+    if (couponCode) {
+      try {
+        couponDetails = await previewCouponDiscount(
+          couponCode,
+          items.map((item) => ({
+            product_id: item.id,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+          totalPrice,
+        );
+        setCouponPreview(couponDetails);
+      } catch (error: any) {
+        toast({
+          title: "Coupon validation failed",
+          description: error?.message || "Unable to validate the coupon.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (!couponDetails?.valid) {
+        toast({
+          title: "Coupon is not valid",
+          description: couponDetails?.message || "Please remove the coupon and try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+    }
+
+    const orderDiscount = couponDetails?.valid ? couponDetails.discountAmount : 0;
+    const orderSubtotal = Math.max(totalPrice - orderDiscount, 0);
+    const orderTax = orderSubtotal * 0.1;
+    const grandTotal = orderSubtotal + deliveryCost + orderTax;
 
     const { data: dbOrder, error: orderErr } = await supabase.rpc("create_order_with_items", {
       p_user_id: user.id,
@@ -203,9 +283,10 @@ export default function CheckoutPage() {
       p_shipping_method: "standard",
       p_delivery_fee: deliveryCost,
       p_subtotal: totalPrice,
-      p_tax: tax,
+      p_tax: orderTax,
       p_total: grandTotal,
       p_affiliate_code: affiliateCode,
+      p_coupon_code: couponDetails?.valid ? couponDetails.code ?? couponCode : null,
       p_items: items.map((it) => ({
         product_id: String(it.id),
         variant_id: it.variantId ?? null,
@@ -244,10 +325,13 @@ export default function CheckoutPage() {
       shippingMethod: "standard",
       deliveryFee: deliveryCost,
       subtotal: totalPrice,
-      tax,
+      tax: orderTax,
       total: grandTotal,
       date: new Date().toISOString(),
       status: "pending",
+      couponCode: couponDetails?.valid ? couponDetails.code ?? couponCode : null,
+      couponTitle: couponDetails?.valid ? couponDetails.title ?? null : null,
+      discountAmount: orderDiscount,
     };
 
     setCreatedOrder(createdLocalOrder);
@@ -511,9 +595,25 @@ export default function CheckoutPage() {
                   )}
 
                   {/* Step 3: Review */}
-                  {step === 3 && (
+                {step === 3 && (
                     <div className="space-y-3 sm:space-y-5">
                       <h2 className="text-xs sm:text-sm font-bold tracking-widest uppercase text-foreground mb-4 sm:mb-6">Review Order</h2>
+                      {(couponLoading || couponPreview?.valid) && (
+                        <div className="rounded-3xl border border-border bg-background/70 p-4 text-xs text-muted-foreground">
+                          {couponLoading ? (
+                            <p>Validating coupon...</p>
+                          ) : couponPreview?.valid ? (
+                            <p>
+                              Coupon {couponPreview.code ?? couponCode} applied{couponPreview.discountAmount > 0 ? `, saving $${couponPreview.discountAmount.toFixed(2)}.` : "."}
+                            </p>
+                          ) : null}
+                        </div>
+                      )}
+                      {couponPreview && !couponPreview.valid && (
+                        <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-xs text-red-700">
+                          {couponPreview.message || "This coupon is not valid for the current cart."}
+                        </div>
+                      )}
 
                       <div className="rounded-3xl border border-border bg-background/70 p-5 shadow-sm">
                         <div className="flex items-center justify-between mb-3">
@@ -628,20 +728,34 @@ export default function CheckoutPage() {
                       </motion.div>
                     ))}
                   </div>
-                  <div className="space-y-2 border-t border-border pt-4 text-sm">
-                    <div className="flex justify-between text-muted-foreground text-xs">
-                      <span>Subtotal</span>
-                      <span>${totalPrice.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground text-xs">
-                      <span>Shipping</span>
-                      <span>{deliveryCost === 0 ? "Free" : `$${deliveryCost}.00`}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-foreground pt-3 border-t border-border text-sm">
-                      <span>Total</span>
-                      <motion.span key={total} initial={{ scale: 1.05 }} animate={{ scale: 1 }}>
-                        ${total.toFixed(2)}
-                      </motion.span>
+                      <div className="space-y-2 border-t border-border pt-4 text-sm">
+                        <div className="flex justify-between text-muted-foreground text-xs">
+                          <span>Subtotal</span>
+                          <span>${totalPrice.toFixed(2)}</span>
+                        </div>
+                        {couponPreview?.valid && couponPreview.discountAmount > 0 && (
+                          <div className="flex justify-between text-foreground text-xs">
+                            <span>Coupon {couponPreview.code ?? couponCode}</span>
+                            <span>- ${couponPreview.discountAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-muted-foreground text-xs">
+                          <span>Merchandise total</span>
+                          <span>${discountedSubtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-muted-foreground text-xs">
+                          <span>Shipping</span>
+                          <span>{deliveryCost === 0 ? "Free" : `$${deliveryCost}.00`}</span>
+                        </div>
+                        <div className="flex justify-between text-muted-foreground text-xs">
+                          <span>Tax (10%)</span>
+                          <span>${tax.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-foreground pt-3 border-t border-border text-sm">
+                          <span>Total</span>
+                          <motion.span key={total} initial={{ scale: 1.05 }} animate={{ scale: 1 }}>
+                            ${total.toFixed(2)}
+                          </motion.span>
                     </div>
                   </div>
                 </div>

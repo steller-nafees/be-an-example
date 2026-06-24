@@ -9,9 +9,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Mail, MapPin, Clock, ArrowRight } from "lucide-react";
+import { Mail, MapPin, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandSettings } from "@/context/LogoContext";
+import { supabase } from "@/lib/supabase";
 
 export default function ContactPage() {
   const { toast } = useToast();
@@ -20,7 +21,8 @@ export default function ContactPage() {
     name: "",
     email: "",
     subject: "",
-    message: ""
+    message: "",
+    company: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,17 +36,28 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Integrate with Supabase to store contact form submissions
-      // For now, just show success message
+      const { error } = await supabase.functions.invoke("contact-submit", {
+        body: {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          subject: formData.subject.trim(),
+          message: formData.message.trim(),
+          company: formData.company.trim(),
+          page_url: window.location.href,
+        },
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Message sent!",
-        description: "We'll get back to you as soon as possible.",
+        description: `We received your message and will reply at ${settings.supportEmail} as soon as possible.`,
       });
-      setFormData({ name: "", email: "", subject: "", message: "" });
+      setFormData({ name: "", email: "", subject: "", message: "", company: "" });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -149,6 +162,16 @@ export default function ContactPage() {
                       value={formData.message}
                       onChange={handleChange}
                       required
+                    />
+                  </div>
+                  <div className="sr-only" aria-hidden="true">
+                    <label className="text-sm font-medium mb-2 block">Company</label>
+                    <Input
+                      name="company"
+                      autoComplete="off"
+                      tabIndex={-1}
+                      value={formData.company}
+                      onChange={handleChange}
                     />
                   </div>
                   <Button 

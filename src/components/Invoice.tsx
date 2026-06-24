@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { Building2, Calendar, Mail, MapPin, Phone } from "lucide-react";
 import { useLogo } from "@/context/LogoContext";
+import BrandLogo from "@/components/BrandLogo";
 import type { Order } from "@/context/OrderContext";
 
 interface InvoiceProps {
@@ -23,7 +24,7 @@ export default function Invoice({ order }: InvoiceProps) {
           <div>
             {logo ? (
               <div className="mb-2">
-                <img src={logo} alt="Company logo" className="h-10 object-contain" />
+                <BrandLogo baseHeight={40} alt="Company logo" />
               </div>
             ) : (
               <div className="flex items-center gap-2 mb-2">
@@ -120,6 +121,14 @@ export default function Invoice({ order }: InvoiceProps) {
               <span className="text-gray-600">Subtotal</span>
               <span className="text-gray-900">${order.subtotal.toFixed(2)}</span>
             </div>
+            {order.discountAmount && order.discountAmount > 0 ? (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">
+                  Coupon{order.couponCode ? ` (${order.couponCode})` : ""}
+                </span>
+                <span className="text-gray-900">- ${order.discountAmount.toFixed(2)}</span>
+              </div>
+            ) : null}
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">{shippingFeeLabel}</span>
               <span className="text-gray-900">${order.deliveryFee.toFixed(2)}</span>

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Upload, Save, CreditCard, User, Store, X, RotateCcw } from "lucide-react";
 import { defaultBrandSettings, type BrandSettings, useBrandSettings, useLogo } from "@/context/LogoContext";
 import { useToast } from "@/hooks/use-toast";
+import { Slider } from "@/components/ui/slider";
 
 const tabs = [
   { id: "store", label: "Store", icon: Store },
@@ -19,7 +20,7 @@ export default function AdminSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleSettingChange = (field: keyof BrandSettings, value: string) => {
+  const handleSettingChange = (field: keyof BrandSettings, value: string | number) => {
     setSettingsDraft((current) => ({ ...current, [field]: value }));
   };
 
@@ -235,7 +236,8 @@ export default function AdminSettings() {
                       <img
                         src={logo}
                         alt="Store logo"
-                        className="max-h-32 max-w-full object-contain mx-auto"
+                        className="max-w-full object-contain mx-auto"
+                        style={{ height: `${Math.max(12, Math.round(40 * (settingsDraft.logoScale ?? 1)))}px` }}
                       />
                       <div className="flex gap-2 mt-4">
                         <button
@@ -269,6 +271,29 @@ export default function AdminSettings() {
                       </p>
                     </button>
                   )}
+                  <div className="space-y-2 rounded-lg border border-border bg-background p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Logo size</p>
+                        <p className="text-xs text-muted-foreground">Adjust how large the logo appears across the store.</p>
+                      </div>
+                      <span className="text-xs font-semibold text-muted-foreground tabular-nums">
+                        {Math.round((settingsDraft.logoScale ?? 1) * 100)}%
+                      </span>
+                    </div>
+                    <Slider
+                      value={[Math.round((settingsDraft.logoScale ?? 1) * 100)]}
+                      min={50}
+                      max={150}
+                      step={1}
+                      onValueChange={([value]) => handleSettingChange("logoScale", value / 100)}
+                    />
+                    <div className="flex justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <span>Smaller</span>
+                      <span>Default</span>
+                      <span>Larger</span>
+                    </div>
+                  </div>
                   <input
                     ref={fileInputRef}
                     type="file"

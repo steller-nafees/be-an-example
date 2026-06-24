@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { Link, useNavigate, useLocation, Navigate } from "react-router-dom";
@@ -19,7 +19,7 @@ export default function AuthPage() {
   const { settings } = useBrandSettings();
   const redirectTo = (location.state as any)?.from as string | undefined;
 
-  const [mode, setMode] = useState<Mode>(location.pathname === "/reset-password" ? "forgot" : "login");
+  const [mode, setMode] = useState<Mode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -29,18 +29,10 @@ export default function AuthPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmSent, setConfirmSent] = useState(false);
 
-  useEffect(() => {
-    if (location.pathname === "/reset-password") {
-      setMode("forgot");
-    }
-  }, [location.pathname]);
-
   // If already signed in, bounce to the right dashboard
   if (!authLoading && user) {
     return <Navigate to={redirectTo || dashFor(role)} replace />;
   }
-
-
 
   const passwordStrength = (() => {
     if (password.length === 0) return 0;

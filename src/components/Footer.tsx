@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Instagram, Twitter, Facebook, Mail, ArrowRight } from "lucide-react";
 import { useLogo } from "@/context/LogoContext";
+import BrandLogo from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -76,7 +77,7 @@ export default function Footer() {
           >
             {logo && (
               <div className="mb-6">
-                <img src={logo} alt={settings.brandName} className="h-10 object-contain invert" />
+                <BrandLogo baseHeight={40} alt={settings.brandName} className="invert" />
               </div>
             )}
             <p className="text-sm text-primary-foreground/70 mb-6">

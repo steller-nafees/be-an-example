@@ -6,6 +6,8 @@ export interface ProductColor {
   value: string
 }
 
+export type SizeChartRow = Record<string, string | number | null>
+
 export interface Product {
   id: string
   name: string
@@ -17,11 +19,13 @@ export interface Product {
   category: string
   sizes: string[]
   colors: ProductColor[]
+  size_chart?: SizeChartRow[]
   description: string
   rating: number
   reviews: number
   stock: number
   published?: boolean
+  scheduled_at?: string | null
   collection_id?: string | null
   printful_product_id?: string | null
   created_at?: string
@@ -38,9 +42,11 @@ const normalizeProduct = (product: Product): Product => ({
   archive_hover_image: product.archive_hover_image ?? null,
   sizes: product.sizes || [],
   colors: product.colors || [],
+  size_chart: Array.isArray(product.size_chart) ? product.size_chart : [],
   rating: Number(product.rating) || 0,
   reviews: Number(product.reviews) || 0,
   stock: Number(product.stock) || 0,
+  scheduled_at: product.scheduled_at ?? null,
 })
 
 export const useProducts = () => {
@@ -87,11 +93,13 @@ const productPayload = (p: ProductInput) => ({
   category: p.category,
   sizes: p.sizes,
   colors: p.colors,
+  size_chart: p.size_chart ?? [],
   description: p.description,
   rating: p.rating,
   reviews: p.reviews,
   stock: p.stock,
   published: p.published ?? true,
+  scheduled_at: p.scheduled_at ?? null,
   collection_id: p.collection_id ?? null,
   printful_product_id: p.printful_product_id ?? null,
 })

@@ -25,17 +25,20 @@ create table if not exists public.products (
   category     text not null,
   sizes        text[] not null default '{}',
   colors       jsonb not null default '[]'::jsonb,
+  size_chart   jsonb not null default '[]'::jsonb,
   description  text not null default '',
   rating       numeric(2,1) not null default 5.0,
   reviews      integer not null default 0,
   stock        integer not null default 0,
   published    boolean not null default true,
+  scheduled_at date,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
 
 create index if not exists products_category_idx   on public.products(category);
 create index if not exists products_created_at_idx on public.products(created_at desc);
+create index if not exists products_scheduled_at_idx on public.products(scheduled_at);
 
 drop trigger if exists products_touch_updated_at on public.products;
 create trigger products_touch_updated_at before update on public.products
@@ -249,6 +252,8 @@ create policy "Collections: admin write" on public.collections for all to authen
 
 alter table public.products
   add column if not exists collection_id uuid references public.collections(id) on delete set null;
+alter table public.products
+  add column if not exists scheduled_at date;
 create index if not exists products_collection_idx on public.products(collection_id);
 
 create table if not exists public.product_colors (

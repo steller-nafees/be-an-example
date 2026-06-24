@@ -18,6 +18,9 @@ export interface Order {
   shippingMethod: "standard" | "express" | "overnight";
   deliveryFee: number;
   subtotal: number;
+  discountAmount?: number;
+  couponCode?: string | null;
+  couponTitle?: string | null;
   tax: number;
   total: number;
   date: string; // ISO timestamp

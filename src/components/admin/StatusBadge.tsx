@@ -5,6 +5,7 @@ const statusStyles: Record<string, string> = {
   delivered: "bg-emerald-50 text-emerald-700 border-emerald-200",
   cancelled: "bg-red-50 text-red-700 border-red-200",
   published: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  scheduled: "bg-amber-50 text-amber-700 border-amber-200",
   draft: "bg-muted text-muted-foreground border-border",
 };
 

@@ -18,6 +18,12 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const appUrl =
+  (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "") ||
+  window.location.origin;
+
+const authRedirectUrl = (path: string) => `${appUrl}${path}`;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -91,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: authRedirectUrl("/"),
         data: { full_name: fullName },
       },
     });
@@ -103,9 +109,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: authRedirectUrl("/reset-password"),
     });
-    return { error: error?.message ?? null };
+    if (!error) return { error: null };
+
+    const hint =
+      error.message.toLowerCase().includes("recover") ||
+      error.message.toLowerCase().includes("redirect")
+        ? ` Check that ${authRedirectUrl("/reset-password")} is allowed in Supabase Auth redirect URLs and that email delivery/SMTP is configured.`
+        : "";
+
+    return { error: `${error.message}${hint}` };
   };
 
   const signOut = async () => {

@@ -15,17 +15,20 @@ create table if not exists public.products (
   category     text not null,
   sizes        text[] not null default '{}',
   colors       jsonb not null default '[]'::jsonb,
+  size_chart   jsonb not null default '[]'::jsonb,
   description  text not null default '',
   rating       numeric(2,1) not null default 5.0,
   reviews      integer not null default 0,
   stock        integer not null default 0,
   published    boolean not null default true,
+  scheduled_at date,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
 
 create index if not exists products_category_idx on public.products(category);
 create index if not exists products_created_at_idx on public.products(created_at desc);
+create index if not exists products_scheduled_at_idx on public.products(scheduled_at);
 
 -- auto-update updated_at
 create or replace function public.touch_updated_at()

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Award, Leaf, Target, Users } from "lucide-react";
+import { ArrowRight, Award, Leaf, Package, ShieldCheck, Target, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useBrandSettings } from "@/context/LogoContext";
 
@@ -25,8 +25,17 @@ export default function AboutPage() {
     {
       icon: Leaf,
       title: "Sustainability",
-      description: "Reducing environmental impact through conscious sourcing and practices."
+      description: "Reducing environmental impact through mindful product choices and on-demand production."
     }
+  ];
+
+  const productCategories = [
+    "Hoodies",
+    "Sweatshirts",
+    "Crewnecks",
+    "Tote bags",
+    "Phone cases",
+    "Lifestyle essentials"
   ];
 
   const timeline = [
@@ -35,32 +44,6 @@ export default function AboutPage() {
       title: "The Beginning",
       description: "Founded with a vision to create a platform where quality products meet purposeful commerce."
     },
-    /*
-    {
-      year: "2021",
-      title: "First Milestone",
-      description: "Reached 10,000+ satisfied customers and expanded our product collection."
-    },
-    {
-      year: "2022",
-      title: "Global Expansion",
-      description: "Launched international shipping and established partnerships with premium brands."
-    },
-    {
-      year: "2023",
-      title: "Community Growth",
-      description: "Launched affiliate program, reaching 1,000+ active partners."
-    },
-    {
-      year: "2024",
-      title: "Sustainability Initiative",
-      description: "Committed to carbon-neutral operations and introduced eco-friendly packaging."
-    },
-    {
-      year: "2025",
-      title: "Future Vision",
-      description: "Expanding our community and impact while maintaining uncompromising quality."
-    }*/
   ];
 
   return (
@@ -122,6 +105,34 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Our Products Section */}
+      <section className="bg-secondary/30 py-20">
+        <div className="container mx-auto px-6 max-w-4xl">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">Our Products</h2>
+          <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+            At {settings.brandName}, we create products designed to inspire confidence, discipline, and personal growth through everyday style.
+          </p>
+          <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+            Our collection includes premium hoodies, sweatshirts, crewnecks, tote bags, phone cases, and other lifestyle essentials. Every design is created with a focus on minimal aesthetics, meaningful messaging, and long-lasting wearability.
+          </p>
+          <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+            We believe clothing should be more than something you wear—it should reflect who you are and who you're becoming.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            {productCategories.map((category) => (
+              <span
+                key={category}
+                className="inline-flex items-center gap-2 rounded-full bg-background border border-border px-4 py-2 text-sm font-medium text-foreground"
+              >
+                <Package className="w-3.5 h-3.5 text-primary" />
+                {category}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Timeline Section */}
       <section className="container mx-auto px-6 py-20 max-w-4xl">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-12">Our Journey</h2>
@@ -153,7 +164,7 @@ export default function AboutPage() {
             <div>
               <h3 className="text-xl font-bold mb-4">Thoughtful Design</h3>
               <p className="text-muted-foreground mb-4">
-                Every product undergoes our 5-stage quality assessment process. We partner with only the most trusted manufacturers and artisans who share our commitment to excellence.
+                Every product starts with deliberate design decisions — from blank selection to graphic placement. We carefully choose the products we offer based on material quality, fit, and how well they represent the {settings.brandName} standard.
               </p>
             </div>
             <div>
@@ -171,19 +182,47 @@ export default function AboutPage() {
             <div>
               <h3 className="text-xl font-bold mb-4">Quality Standards</h3>
               <p className="text-muted-foreground mb-4">
-                Before launching a product, we carefully review materials, print quality, fit, and overall presentation to ensure it meets the standards of the {settings.brandName} brand.
+                Before launching any product, we review samples to evaluate materials, print quality, fit, and overall presentation — ensuring everything meets the standard we'd be proud to put the {settings.brandName} name on.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Sustainability Section */}
+      {/* Quality & Fulfillment Section */}
+      <section className="container mx-auto px-6 py-20 max-w-4xl">
+        <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-8">Quality & Fulfillment</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <ShieldCheck className="w-7 h-7 text-primary" />
+              <h3 className="text-xl font-bold">Trusted Partners</h3>
+            </div>
+            <p className="text-muted-foreground leading-relaxed">
+              To ensure consistent quality and reliable delivery, we partner with Printful, one of the world's leading print-on-demand fulfillment providers.
+            </p>
+          </div>
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <Leaf className="w-7 h-7 text-primary" />
+              <h3 className="text-xl font-bold">Printed On Demand</h3>
+            </div>
+            <p className="text-muted-foreground leading-relaxed">
+              Each item is printed specifically for your order, helping reduce unnecessary waste and overproduction while maintaining high production standards. Printful operates fulfillment centers across multiple regions, allowing us to serve customers efficiently around the world.
+            </p>
+          </div>
+        </div>
+      </section>
 
+      {/* Sustainability Section */}
       <section className="container mx-auto px-6 py-20 max-w-4xl">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-8">
           Our Commitment
         </h2>
+
+        <p className="text-lg text-muted-foreground leading-relaxed mb-12">
+          We're building more than a clothing brand—we're building a community that values growth, discipline, and positive impact. We believe success should create positive impact beyond ourselves, which is why we're committed to giving back as the brand grows: once we reach a meaningful revenue milestone, we will begin donating a portion of all revenue to Stripe Climate, supporting innovative technologies focused on carbon removal and long-term climate solutions. Every order helps us move one step closer to that goal.
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
@@ -195,17 +234,14 @@ export default function AboutPage() {
                 <span className="text-primary font-bold">✓</span>
                 <span>Made on demand to help reduce unnecessary waste and overproduction.</span>
               </li>
-
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
                 <span>Produced through trusted fulfillment partners known for consistent quality.</span>
               </li>
-
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
                 <span>Focused on creating timeless pieces rather than fast-moving trends.</span>
               </li>
-
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
                 <span>Committed to making thoughtful improvements as our brand continues to grow.</span>
@@ -217,34 +253,31 @@ export default function AboutPage() {
             <h3 className="text-2xl font-bold mb-4">
               Community Impact
             </h3>
-
             <ul className="space-y-3 text-muted-foreground">
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
                 <span>Building a community centered around growth, discipline, and self-respect.</span>
               </li>
-
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
                 <span>Creating products that inspire confidence and intentional living.</span>
               </li>
-
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
                 <span>Listening to customer feedback to shape future collections.</span>
               </li>
-
               <li className="flex gap-3">
                 <span className="text-primary font-bold">✓</span>
                 <span>Encouraging people to lead by example in everyday life.</span>
               </li>
             </ul>
           </div>
-
-
         </div>
-      </section>
 
+        <p className="text-sm text-muted-foreground mt-10 italic">
+          Thank you for being part of the journey.
+        </p>
+      </section>
 
       {/* CTA Section */}
       <section className="bg-primary text-primary-foreground py-20">

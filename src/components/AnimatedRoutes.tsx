@@ -10,6 +10,7 @@ import Index from "@/pages/Index";
 import ShopPage from "@/pages/ShopPage";
 import ProductPage from "@/pages/ProductPage";
 import AuthPage from "@/pages/AuthPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import WishlistPage from "@/pages/WishlistPage";
 import OrderHistoryPage from "@/pages/OrderHistoryPage";
@@ -26,6 +27,7 @@ import OrderTrackPage from "@/pages/OrderTrackPage";
 import NotFound from "@/pages/NotFound";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminProducts from "@/pages/admin/AdminProducts";
+import AdminCoupons from "@/pages/admin/AdminCoupons";
 import AdminCollections from "@/pages/admin/AdminCollections";
 import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminCustomers from "@/pages/admin/AdminCustomers";
@@ -79,7 +81,7 @@ export default function AnimatedRoutes() {
 
         {/* Auth + public forms */}
         <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
-        <Route path="/reset-password" element={<PageTransition><AuthPage /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPasswordPage /></PageTransition>} />
 
         {/* Account / dashboard */}
         <Route path="/account" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
@@ -111,6 +113,7 @@ export default function AnimatedRoutes() {
         <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminLayout /></ProtectedRoute>}>
           <Route index element={<AdminDashboard />} />
           <Route path="products" element={<AdminProducts />} />
+          <Route path="coupons" element={<AdminCoupons />} />
           <Route path="collections" element={<AdminCollections />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="customers" element={<AdminCustomers />} />

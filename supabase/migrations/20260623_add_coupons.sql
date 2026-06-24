@@ -1,34 +1,7 @@
 -- ============================================================
--- Printful fulfillment integration
--- Run this in Supabase SQL Editor after the main setup files.
+-- Coupon system for admin + checkout
 -- Safe to re-run.
 -- ============================================================
-
-alter table public.products
-  add column if not exists printful_product_id text,
-  add column if not exists size_chart jsonb not null default '[]'::jsonb,
-  add column if not exists scheduled_at date;
-
-alter table public.product_variants
-  add column if not exists printful_sync_variant_id integer;
-
-alter table public.orders
-  add column if not exists country text default 'US',
-  add column if not exists printful_order_id text,
-  add column if not exists printful_status text not null default 'not_submitted',
-  add column if not exists printful_error text,
-  add column if not exists printful_submitted_at timestamptz;
-
-alter table public.order_items
-  add column if not exists variant_id uuid references public.product_variants(id) on delete set null,
-  add column if not exists printful_sync_variant_id integer;
-
-create index if not exists product_variants_printful_sync_idx
-  on public.product_variants(printful_sync_variant_id);
-create index if not exists products_scheduled_at_idx
-  on public.products(scheduled_at);
-create index if not exists orders_printful_order_idx
-  on public.orders(printful_order_id);
 
 do $$
 begin
@@ -340,7 +313,9 @@ create or replace function public.create_order_with_items(
   p_coupon_code text default null
 )
 returns public.orders
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer
+set search_path = public
+as $$
 declare
   new_order public.orders%rowtype;
   v_expected_total numeric;

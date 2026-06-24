@@ -35,6 +35,9 @@ interface DBOrderRow {
   shipping_method: "standard" | "express" | "overnight";
   delivery_fee: number;
   subtotal: number;
+  discount_amount: number | null;
+  coupon_code: string | null;
+  coupon_title: string | null;
   tax: number;
   total: number;
   status: string;
@@ -86,6 +89,9 @@ export default function OrderHistoryPage() {
             shippingMethod: o.shipping_method,
             deliveryFee: o.delivery_fee,
             subtotal: o.subtotal,
+            discountAmount: o.discount_amount ?? 0,
+            couponCode: o.coupon_code ?? null,
+            couponTitle: o.coupon_title ?? null,
             tax: o.tax,
             total: o.total,
             date: o.created_at,
@@ -97,6 +103,30 @@ export default function OrderHistoryPage() {
     };
 
     loadOrders();
+
+    const channel = supabase
+      .channel(`order_history_${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        (payload: any) => {
+          setOrders((prev) => {
+            if (payload.eventType === "INSERT") return [payload.new, ...prev];
+            if (payload.eventType === "UPDATE") return prev.map((o) => (o.id === payload.new.id ? { ...o, ...payload.new } : o));
+            if (payload.eventType === "DELETE") return prev.filter((o) => o.id !== payload.old.id);
+            return prev;
+          });
+
+          setSelectedOrder((current) =>
+            current && current.id === payload.new?.id ? { ...current, ...payload.new } : current
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   return (

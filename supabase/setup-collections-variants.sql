@@ -35,8 +35,13 @@ create policy "Collections: admin write"
 -- 2. Link products to a collection ---------------------------------
 alter table public.products
   add column if not exists collection_id uuid references public.collections(id) on delete set null;
+alter table public.products
+  add column if not exists size_chart jsonb not null default '[]'::jsonb;
+alter table public.products
+  add column if not exists scheduled_at date;
 
 create index if not exists products_collection_idx on public.products(collection_id);
+create index if not exists products_scheduled_at_idx on public.products(scheduled_at);
 
 -- 3. Per-color images for a product --------------------------------
 create table if not exists public.product_colors (

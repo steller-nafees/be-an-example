@@ -38,6 +38,11 @@ import { supabase } from "@/lib/supabase";
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const CATEGORIES = ["hoodies", "tshirts", "accessories"];
+const SIZE_CHART_TEMPLATE = `[
+  { "Size": "XS", "Chest": "20", "Length": "27", "Shoulder": "18" },
+  { "Size": "S", "Chest": "21", "Length": "28", "Shoulder": "19" },
+  { "Size": "M", "Chest": "22", "Length": "29", "Shoulder": "20" }
+]`;
 
 interface PrintfulListProduct {
   id: number;
@@ -83,11 +88,13 @@ const emptyDraft = (): ProductInput => ({
   category: "hoodies",
   sizes: [],
   colors: [],
+  size_chart: [],
   description: "",
   rating: 5,
   reviews: 0,
   stock: 0,
   published: true,
+  scheduled_at: null,
   collection_id: null,
   printful_product_id: null,
 });
@@ -120,6 +127,28 @@ const inferCategory = (name: string) => {
   return "accessories";
 };
 
+const parseLocalDate = (value?: string | null) => {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+};
+
+const isScheduledForFuture = (value?: string | null) => {
+  const date = parseLocalDate(value);
+  return !!date && date.getTime() > Date.now();
+};
+
+const formatLaunchDate = (value?: string | null) => {
+  const date = parseLocalDate(value);
+  if (!date) return "";
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 export default function AdminProducts() {
   const { data: products = [], isLoading, error } = useProducts();
   const { data: collections = [] } = useCollections();
@@ -130,6 +159,7 @@ export default function AdminProducts() {
   const [view, setView] = useState<"grid" | "table">("table");
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<ProductInput | null>(null);
+  const [sizeChartJson, setSizeChartJson] = useState(SIZE_CHART_TEMPLATE);
   const [colorsDraft, setColorsDraft] = useState<SaveColorInput[]>([]);
   const [printfulOpen, setPrintfulOpen] = useState(false);
   const [printfulProducts, setPrintfulProducts] = useState<PrintfulListProduct[]>([]);
@@ -180,15 +210,18 @@ export default function AdminProducts() {
 
   const openAdd = () => {
     setColorsDraft([]);
+    setSizeChartJson(SIZE_CHART_TEMPLATE);
     setEditing(emptyDraft());
   };
   const openEdit = (p: Product) => {
     setColorsDraft([]);
-    setEditing({ ...p, published: p.published ?? true });
+    setSizeChartJson(JSON.stringify(p.size_chart ?? [], null, 2));
+    setEditing({ ...p, published: p.published ?? true, scheduled_at: p.scheduled_at ?? null });
   };
   const close = () => {
     setEditing(null);
     setColorsDraft([]);
+    setSizeChartJson(SIZE_CHART_TEMPLATE);
   };
 
   const loadPrintfulProducts = async () => {
@@ -272,6 +305,7 @@ export default function AdminProducts() {
         description: "",
         printful_product_id: String(syncProduct.id),
         published: false,
+        scheduled_at: null,
       });
       setPrintfulOpen(false);
       toast({
@@ -334,6 +368,19 @@ export default function AdminProducts() {
     if (!existingVariantsLoaded)
       return toast({ title: "Still loading variants", description: "Please try saving again in a moment.", variant: "destructive" });
     try {
+      const parsedSizeChart = sizeChartJson.trim()
+        ? JSON.parse(sizeChartJson)
+        : [];
+      if (!Array.isArray(parsedSizeChart)) {
+        throw new Error("Size chart JSON must be an array of row objects.");
+      }
+      const normalizedSizeChart = parsedSizeChart.map((row, index) => {
+        if (!row || typeof row !== "object" || Array.isArray(row)) {
+          throw new Error(`Size chart row ${index + 1} must be an object.`);
+        }
+        return row as Record<string, string | number | null>;
+      });
+
       // Mirror variant data onto legacy product columns so cards/lists still render
       const aggregatedColors = colorsDraft.length
         ? colorsDraft.map((c) => ({ name: c.name, value: c.value }))
@@ -351,6 +398,7 @@ export default function AdminProducts() {
         ...editing,
         published: editing.published ?? true,
         colors: aggregatedColors,
+        size_chart: normalizedSizeChart,
         sizes: aggregatedSizes,
         image: cover,
         images: aggregatedImages,
@@ -529,7 +577,15 @@ export default function AdminProducts() {
                       <span className={`text-sm font-medium ${product.stock <= 5 ? "text-amber-600" : "text-foreground/70"}`}>{product.stock}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={product.published === false ? "draft" : "published"} />
+                      <StatusBadge
+                        status={
+                          product.published === false
+                            ? "draft"
+                            : isScheduledForFuture(product.scheduled_at)
+                            ? "scheduled"
+                            : "published"
+                        }
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
@@ -597,6 +653,20 @@ export default function AdminProducts() {
               </div>
 
               <div className="p-5 space-y-5">
+                <div className="grid grid-cols-1 gap-4">
+                  <Field label="Size chart JSON">
+                    <textarea
+                      rows={10}
+                      value={sizeChartJson}
+                      onChange={(e) => setSizeChartJson(e.target.value)}
+                      className={inputCls + " resize-y font-mono text-xs leading-6"}
+                      placeholder={SIZE_CHART_TEMPLATE}
+                    />
+                  </Field>
+                  <p className="text-[11px] text-muted-foreground -mt-2">
+                    Paste an array of row objects. The keys become the table headers on the product page.
+                  </p>
+                </div>
                 <input
                   ref={fileRef}
                   type="file"
@@ -732,17 +802,57 @@ export default function AdminProducts() {
                       ))}
                     </select>
                   </Field>
-                  <Field label="Visibility">
-                    <div className="flex items-center gap-2 h-10">
-                      <button type="button" onClick={() => setEditing({ ...editing, published: true })} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border ${editing.published ? "bg-foreground/10 border-foreground/20" : "border-border text-muted-foreground"}`}>
-                        <Eye size={12} /> Published
-                      </button>
-                      <button type="button" onClick={() => setEditing({ ...editing, published: false })} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border ${!editing.published ? "bg-foreground/10 border-foreground/20" : "border-border text-muted-foreground"}`}>
-                        <EyeOff size={12} /> Draft
-                      </button>
+                  <Field label="Launch date">
+                    <div className="space-y-2">
+                      <input
+                        type="date"
+                        value={editing.scheduled_at ?? ""}
+                        onChange={(e) => setEditing({ ...editing, scheduled_at: e.target.value || null })}
+                        className={inputCls}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Keep blank for immediate release. When this date is in the future, the storefront button will say "Order On" until the date arrives.
+                      </p>
+                      {editing.scheduled_at && (
+                        <button
+                          type="button"
+                          onClick={() => setEditing({ ...editing, scheduled_at: null })}
+                          className="text-[11px] text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                        >
+                          Clear launch date
+                        </button>
+                      )}
                     </div>
                   </Field>
                 </div>
+
+                <Field label="Visibility">
+                  <div className="flex items-center gap-2 h-10">
+                    <button
+                      type="button"
+                      onClick={() => setEditing({ ...editing, published: true })}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border ${
+                        editing.published ? "bg-foreground/10 border-foreground/20" : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      <Eye size={12} /> Published
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditing({ ...editing, published: false })}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border ${
+                        !editing.published ? "bg-foreground/10 border-foreground/20" : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      <EyeOff size={12} /> Draft
+                    </button>
+                    {editing.scheduled_at && (
+                      <span className="text-[11px] text-muted-foreground">
+                        Launches on {formatLaunchDate(editing.scheduled_at)}
+                      </span>
+                    )}
+                  </div>
+                </Field>
 
                 {/* ===== Variants editor ===== */}
                 <div className="pt-2 border-t border-border">

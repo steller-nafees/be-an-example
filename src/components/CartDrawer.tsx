@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, ShoppingBag, Tag, ChevronDown, ChevronUp } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Link } from "react-router-dom";
+import { previewCouponDiscount, type CouponPreview } from "@/lib/coupons";
 
 function QuantitySelector({ quantity, onUpdate }: { quantity: number; onUpdate: (q: number) => void }) {
   return (
@@ -37,33 +38,105 @@ function QuantitySelector({ quantity, onUpdate }: { quantity: number; onUpdate: 
   );
 }
 
-const VALID_COUPONS = new Set(["BEANEXAMPLE10", "WELCOME5", "SAVE20"]);
-
 export default function CartDrawer() {
-  const { items, isOpen, setIsOpen, updateQuantity, removeItem, totalPrice } = useCart();
+  const {
+    items,
+    isOpen,
+    setIsOpen,
+    updateQuantity,
+    removeItem,
+    totalPrice,
+    couponCode,
+    setCouponCode,
+    clearCoupon,
+  } = useCart();
   const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState("");
   const [showCoupon, setShowCoupon] = useState(false);
+  const [couponPreview, setCouponPreview] = useState<CouponPreview | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  useEffect(() => {
+    setCoupon(couponCode);
+  }, [couponCode]);
+
+  useEffect(() => {
+    let active = true;
+    if (!couponCode || items.length === 0) {
+      setCouponPreview(null);
+      setCouponLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    setCouponLoading(true);
+    previewCouponDiscount(
+      couponCode,
+      items.map((item) => ({
+        product_id: item.id,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      totalPrice,
+    )
+      .then((preview) => {
+        if (!active) return;
+        setCouponPreview(preview);
+        if (preview && !preview.valid) {
+          setCouponError(preview.message || "Coupon code is not valid.");
+        } else {
+          setCouponError("");
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+        setCouponPreview(null);
+      })
+      .finally(() => {
+        if (active) setCouponLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [couponCode, items, totalPrice]);
 
   const handleApplyCoupon = () => {
     const code = coupon.trim().toUpperCase();
 
     if (!code) {
-      setCouponApplied(false);
       setCouponError("Please enter a coupon code.");
       return;
     }
 
-    if (!VALID_COUPONS.has(code)) {
-      setCouponApplied(false);
-      setCouponError("Coupon code is not valid.");
-      return;
-    }
+    previewCouponDiscount(
+      code,
+      items.map((item) => ({
+        product_id: item.id,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      totalPrice,
+    )
+      .then((preview) => {
+        if (!preview?.valid) {
+          clearCoupon();
+          setCouponPreview(preview);
+          setCouponError(preview?.message || "Coupon code is not valid.");
+          return;
+        }
 
-    setCouponApplied(true);
-    setCouponError("");
-    setCoupon(code);
+        setCouponPreview(preview);
+        setCouponError("");
+        setCouponCode(code);
+        setCoupon(code);
+      })
+      .catch((error: any) => {
+        clearCoupon();
+        setCouponPreview(null);
+        setCouponError(error?.message || "Coupon code is not valid.");
+      });
   };
 
   return (
@@ -229,7 +302,6 @@ export default function CartDrawer() {
                             onChange={(e) => {
                               setCoupon(e.target.value);
                               setCouponError("");
-                              setCouponApplied(false);
                             }}
                             placeholder="Enter code"
                             className="flex-1 h-10 px-3 border border-border bg-background text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
@@ -242,7 +314,15 @@ export default function CartDrawer() {
                             Apply
                           </motion.button>
                         </div>
-                        {couponError ? (
+                        {couponLoading ? (
+                          <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-xs text-muted-foreground font-medium mb-3"
+                          >
+                            Checking coupon...
+                          </motion.p>
+                        ) : couponError ? (
                           <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -250,15 +330,29 @@ export default function CartDrawer() {
                           >
                             {couponError}
                           </motion.p>
-                        ) : couponApplied ? (
+                        ) : couponPreview?.valid ? (
                           <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             className="text-xs text-foreground font-medium mb-3"
                           >
-                            Coupon applied!
+                            Coupon applied{couponPreview.discountAmount > 0 ? ` • saved $${couponPreview.discountAmount.toFixed(2)}` : ""}
                           </motion.p>
                         ) : null}
+                        {couponPreview?.valid && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              clearCoupon();
+                              setCoupon("");
+                              setCouponPreview(null);
+                              setCouponError("");
+                            }}
+                            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors mb-3"
+                          >
+                            Remove coupon
+                          </button>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -270,6 +364,18 @@ export default function CartDrawer() {
                     <span>Subtotal</span>
                     <span>${totalPrice.toFixed(2)}</span>
                   </div>
+                  {couponPreview?.valid && couponPreview.discountAmount > 0 && (
+                    <div className="flex justify-between text-xs text-foreground">
+                      <span>Coupon {couponPreview.code ?? couponCode}</span>
+                      <span>- ${couponPreview.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Merchandise total</span>
+                    <span>
+                      ${(Math.max(totalPrice - (couponPreview?.valid ? couponPreview.discountAmount : 0), 0)).toFixed(2)}
+                    </span>
+                  </div>
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Shipping</span>
                     <span>Calculated at checkout</span>
@@ -277,11 +383,11 @@ export default function CartDrawer() {
                   <div className="flex justify-between text-sm font-bold text-foreground pt-2 border-t border-border mt-2">
                     <span>Total</span>
                     <motion.span
-                      key={totalPrice}
+                      key={Math.max(totalPrice - (couponPreview?.valid ? couponPreview.discountAmount : 0), 0)}
                       initial={{ scale: 1.1 }}
                       animate={{ scale: 1 }}
                     >
-                      ${totalPrice.toFixed(2)}
+                      ${(Math.max(totalPrice - (couponPreview?.valid ? couponPreview.discountAmount : 0), 0)).toFixed(2)}
                     </motion.span>
                   </div>
                 </div>

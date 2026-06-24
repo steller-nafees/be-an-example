@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLogo } from "@/context/LogoContext";
 import { useAuth } from "@/context/AuthContext";
+import BrandLogo from "@/components/BrandLogo";
 import {
   LayoutDashboard,
   Package,
@@ -20,12 +21,14 @@ import {
   X,
   UserPlus,
   Shield,
+  Tag,
 } from "lucide-react";
 
 const navItems = [
   { label: "Overview", path: "/admin", icon: LayoutDashboard },
   { label: "Collections", path: "/admin/collections", icon: Layers },
   { label: "Products", path: "/admin/products", icon: Package },
+  { label: "Coupons", path: "/admin/coupons", icon: Tag },
   { label: "Orders", path: "/admin/orders", icon: ShoppingCart },
   { label: "Customers", path: "/admin/customers", icon: Users },
   { label: "Affiliates", path: "/admin/affiliates", icon: UserPlus },
@@ -87,7 +90,7 @@ export default function AdminLayout() {
         <div className="flex items-center justify-between h-14 px-4 border-b border-border">
           {!collapsed && (
             logo ? (
-              <img src={logo} alt={settings.brandName} className="h-6 object-contain" />
+              <BrandLogo baseHeight={24} alt={settings.brandName} />
             ) : (
               <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
                 {settings.brandName}
@@ -138,7 +141,7 @@ export default function AdminLayout() {
             >
               <div className="flex items-center justify-between h-14 px-4 border-b border-border">
                 {logo ? (
-                  <img src={logo} alt={settings.brandName} className="h-6 object-contain" />
+                  <BrandLogo baseHeight={24} alt={settings.brandName} />
                 ) : (
                   <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground/70">
                     {settings.brandName}

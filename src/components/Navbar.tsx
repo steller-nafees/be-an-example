@@ -7,6 +7,7 @@ import { useLogo } from "@/context/LogoContext";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
 import MegaMenu from "./MegaMenu";
+import BrandLogo from "./BrandLogo";
 
 const links = [
   { label: "Home", href: "/" },
@@ -114,7 +115,7 @@ export default function Navbar() {
         <div className="container mx-auto flex items-center justify-between h-16 md:h-20 px-6">
           <Link to="/" className="flex items-center gap-2">
             {logo ? (
-              <img src={logo} alt={settings.brandName} className="h-8 md:h-10 object-contain" />
+              <BrandLogo baseHeight={40} alt={settings.brandName} />
             ) : (
               <span className="text-lg md:text-xl font-black tracking-[0.2em] text-foreground uppercase">
                 {settings.brandName}
@@ -224,7 +225,7 @@ export default function Navbar() {
             <div className="flex items-center justify-between h-16 px-6 border-b border-border">
               <Link to="/" className="flex items-center gap-2">
                 {logo ? (
-                  <img src={logo} alt={settings.brandName} className="h-6 object-contain" />
+                  <BrandLogo baseHeight={24} alt={settings.brandName} />
                 ) : (
                   <span className="text-lg font-black tracking-[0.2em] uppercase">{settings.brandName}</span>
                 )}

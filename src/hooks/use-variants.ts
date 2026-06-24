@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const isUuid = (value?: string | null) => !!value && UUID_RE.test(value)
+
 export interface ProductColor {
   id: string
   product_id: string
@@ -94,7 +97,7 @@ export const useSaveProductVariants = () => {
       if (colorsFetchError) throw colorsFetchError
       if (variantsFetchError) throw variantsFetchError
 
-      const keepColorIds = new Set(colors.filter((c) => c.id).map((c) => c.id!))
+      const keepColorIds = new Set(colors.filter((c) => isUuid(c.id)).map((c) => c.id!))
       const colorsToDelete = (existingColors || [])
         .map((c: any) => c.id)
         .filter((id: string) => !keepColorIds.has(id))
@@ -114,7 +117,7 @@ export const useSaveProductVariants = () => {
           images: c.images,
           position: c.position,
         }
-        if (c.id) payload.id = c.id
+        if (isUuid(c.id)) payload.id = c.id
         const { data, error } = await supabase
           .from('product_colors')
           .upsert(payload)
@@ -129,9 +132,9 @@ export const useSaveProductVariants = () => {
       const variantRows: any[] = []
       colors.forEach((c, i) => {
         c.variants.forEach((v) => {
-          if (v.id) keepVariantIds.add(v.id)
+          if (isUuid(v.id)) keepVariantIds.add(v.id)
           variantRows.push({
-            ...(v.id ? { id: v.id } : {}),
+            ...(isUuid(v.id) ? { id: v.id } : {}),
             product_id: productId,
             color_id: colorIdMap[i],
             size: v.size,

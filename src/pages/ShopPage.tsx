@@ -2,7 +2,9 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SlidersHorizontal, X, Search } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
+import { useCollections } from "@/hooks/use-collections";
 import ProductCard from "@/components/ProductCard";
+import { useSearchParams } from "react-router-dom";
 
 const categories = ["all", "hoodies", "tshirts", "accessories"] as const;
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -15,11 +17,32 @@ const sortOptions = [
 
 export default function ShopPage() {
   const { data: products = [] } = useProducts();
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<string>("all");
+  const { data: collections = [] } = useCollections();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [sort, setSort] = useState("newest");
   const [filterOpen, setFilterOpen] = useState(false);
+
+  const search = searchParams.get("q") || "";
+  const category = searchParams.get("category") || "all";
+  const sort = searchParams.get("sort") || "newest";
+  const collectionParam = searchParams.get("collection") || "all";
+
+  const selectedCollectionId = useMemo(() => {
+    if (collectionParam === "all") return null;
+    const matched = collections.find(
+      (collection) => collection.slug === collectionParam || collection.id === collectionParam
+    );
+    return matched?.id ?? null;
+  }, [collections, collectionParam]);
+
+  const updateParams = (next: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(next).forEach(([key, value]) => {
+      if (!value || value === "all" || value === "newest") params.delete(key);
+      else params.set(key, value);
+    });
+    setSearchParams(params, { replace: true });
+  };
 
 
   const toggleSize = (s: string) =>
@@ -29,6 +52,11 @@ export default function ShopPage() {
     let result = [...products];
     if (search) result = result.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
     if (category !== "all") result = result.filter((p) => p.category === category);
+    if (collectionParam !== "all") {
+      result = selectedCollectionId
+        ? result.filter((p) => p.collection_id === selectedCollectionId)
+        : [];
+    }
     if (selectedSizes.length > 0) result = result.filter((p) => p.sizes.some((s) => selectedSizes.includes(s)));
     switch (sort) {
       case "price-asc": result.sort((a, b) => a.price - b.price); break;
@@ -59,13 +87,13 @@ export default function ShopPage() {
                 type="text"
                 placeholder="Search products..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => updateParams({ q: e.target.value || null })}
                 className="w-full h-12 pl-11 pr-4 border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
               />
             </div>
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value)}
+              onChange={(e) => updateParams({ sort: e.target.value })}
               className="h-12 px-4 border border-border bg-background text-foreground text-sm focus:outline-none focus:border-foreground"
             >
               {sortOptions.map((o) => (
@@ -86,13 +114,13 @@ export default function ShopPage() {
               <div>
                 <h3 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-3">Category</h3>
                 <div className="space-y-2">
-                  {categories.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setCategory(c)}
-                      className={`block text-sm transition-colors ${category === c ? "text-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      {c === "all" ? "All" : c === "tshirts" ? "T-Shirts" : c.charAt(0).toUpperCase() + c.slice(1)}
+                    {categories.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => updateParams({ category: c })}
+                        className={`block text-sm transition-colors ${category === c ? "text-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {c === "all" ? "All" : c === "tshirts" ? "T-Shirts" : c.charAt(0).toUpperCase() + c.slice(1)}
                     </button>
                   ))}
                 </div>
@@ -157,7 +185,7 @@ export default function ShopPage() {
                         {categories.map((c) => (
                           <button
                             key={c}
-                            onClick={() => setCategory(c)}
+                            onClick={() => updateParams({ category: c })}
                             className={`px-4 py-2 text-xs font-medium border transition-all ${category === c ? "bg-foreground text-primary-foreground border-foreground" : "border-border text-foreground"}`}
                           >
                             {c === "all" ? "All" : c === "tshirts" ? "T-Shirts" : c.charAt(0).toUpperCase() + c.slice(1)}

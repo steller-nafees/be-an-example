@@ -37,16 +37,11 @@ export default function MegaMenu({ onClose }: MegaMenuProps) {
     return uniqueCategories.slice(0, 4); // Limit to 4 categories
   }, [products]);
 
-  // Get featured collection (newest) for "New Drop"
+  const latestProduct = products[0] ?? null;
   const featuredCollection = useMemo(() => {
-    return collections.length > 0 ? collections[0] : null;
-  }, [collections]);
-
-  // Get featured product from newest collection for image
-  const featuredProduct = useMemo(() => {
-    if (!featuredCollection) return null;
-    return products.find((p) => p.collection_id === featuredCollection.id);
-  }, [featuredCollection, products]);
+    if (!latestProduct?.collection_id) return null;
+    return collections.find((col) => col.id === latestProduct.collection_id) ?? null;
+  }, [collections, latestProduct]);
 
   const menuData = [
     {
@@ -128,15 +123,15 @@ export default function MegaMenu({ onClose }: MegaMenuProps) {
 
             {/* Featured Collection */}
             <motion.div variants={columnVariants}>
-              {featuredProduct?.image ? (
+              {latestProduct?.image ? (
                 <Link
-                  to={`/products/${featuredProduct.id}`}
+                  to={`/product/${latestProduct.id}`}
                   onClick={onClose}
                   className="group block relative overflow-hidden aspect-[4/5]"
                 >
                   <img
-                    src={featuredProduct.image}
-                    alt={featuredCollection?.name || "Featured Product"}
+                    src={latestProduct.image}
+                    alt={latestProduct.name}
                     loading="lazy"
                     width={640}
                     height={800}

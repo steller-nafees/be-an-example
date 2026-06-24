@@ -57,6 +57,33 @@ function useZoom() {
   return { ref, pos, active, setActive, onMove };
 }
 
+function formatSizeChartCell(value: unknown) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "number") return Number.isInteger(value) ? String(value) : value.toFixed(1);
+  return String(value);
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function parseLocalDate(value?: string | null) {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function formatScheduledDate(value?: string | null) {
+  const date = parseLocalDate(value);
+  if (!date) return "";
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 /* ---------------- page ---------------- */
 
 export default function ProductPage() {
@@ -75,6 +102,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [lightbox, setLightbox] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [loadingGallery, setLoadingGallery] = useState(false);
 
   // reset when switching products
@@ -109,8 +137,17 @@ export default function ProductPage() {
   }, [variantColors, product]);
 
   const currentColor = colors[selectedColorIdx];
-  const activeImages =
-    currentColor?.images?.length ? currentColor.images : product?.images || [];
+  const galleryImages = useMemo(() => {
+    const fallback = product?.image ? [product.image] : [];
+    const productGallery = product?.images?.length ? product.images : [];
+    const colorGallery = currentColor?.images?.length ? currentColor.images : [];
+
+    if (selectedVariantId) {
+      return colorGallery.length ? colorGallery : productGallery.length ? productGallery : fallback;
+    }
+
+    return productGallery.length ? productGallery : colorGallery.length ? colorGallery : fallback;
+  }, [currentColor?.images, product?.image, product?.images, selectedVariantId]);
 
   const sizeOptions = useMemo<VariantSizeOption[]>(() => {
     if (variants.length && currentColor?.id) {
@@ -137,6 +174,31 @@ export default function ProductPage() {
     if (!selectedSize) return product?.stock ?? 0;
     return sizeOptions.find((s) => s.size === selectedSize)?.stock ?? 0;
   }, [sizeOptions, selectedSize, product]);
+
+  const sizeChartTable = useMemo(() => {
+    const rows = Array.isArray(product?.size_chart) ? product.size_chart : [];
+    if (rows.length > 0) {
+      const headers = Array.from(
+        new Set(rows.flatMap((row) => Object.keys(row || {})))
+      );
+      return {
+        headers,
+        rows: rows.map((row) => headers.map((header) => formatSizeChartCell(row?.[header]))),
+      };
+    }
+
+    if (sizeOptions.length > 0) {
+      return {
+        headers: ["Size", "Stock"],
+        rows: sizeOptions.map((option) => [
+          option.size,
+          formatSizeChartCell(option.stock),
+        ]),
+      };
+    }
+
+    return null;
+  }, [product?.size_chart, sizeOptions]);
 
   const zoom = useZoom();
 
@@ -191,7 +253,13 @@ export default function ProductPage() {
       } catch (e) {}
 
       // prepare images for the selected color/variant
-      const images = currentColor?.images && currentColor.images.length ? currentColor.images : product.images || [product.image];
+      const images = currentColor?.images?.length
+        ? currentColor.images
+        : product.images?.length
+        ? product.images
+        : product.image
+        ? [product.image]
+        : [];
       setLoadingGallery(true);
       await preloadImages(images);
       // also preload adjacent variant images (sizeOptions neighbors)
@@ -302,8 +370,26 @@ export default function ProductPage() {
   const liked = isWishlisted(product.id);
   const related = allProducts.filter((p) => p.id !== product.id).slice(0, 4);
   const outOfStock = sizeOptions.length > 0 && currentStock <= 0;
+  const hasSizeInfo = sizeOptions.length > 0 || (product.size_chart?.length ?? 0) > 0;
+  const currentMainImage = galleryImages[selectedImage] || product.image;
+  const magnifierSize = 220;
+  const magnifierScale = 3.2;
+  const magnifierX = clamp(zoom.pos.x, 0, 100);
+  const magnifierY = clamp(zoom.pos.y, 0, 100);
+  const magnifierBackgroundX = clamp(magnifierX * (magnifierScale - 1), 0, 100);
+  const magnifierBackgroundY = clamp(magnifierY * (magnifierScale - 1), 0, 100);
+  const scheduledReleaseDate = parseLocalDate(product.scheduled_at);
+  const isScheduledForFuture = !!scheduledReleaseDate && scheduledReleaseDate.getTime() > Date.now();
+  const scheduledReleaseLabel = formatScheduledDate(product.scheduled_at);
+  const primaryCtaLabel = isScheduledForFuture
+    ? `Order On ${scheduledReleaseLabel}`
+    : outOfStock
+    ? "Out of Stock"
+    : "Add to Cart";
+  const primaryCtaDisabled = outOfStock || isScheduledForFuture;
 
   const handleAdd = () => {
+    if (primaryCtaDisabled) return;
     const size =
       selectedSize || sizeOptions[2]?.size || sizeOptions[0]?.size || "M";
     const selectedVariant = sizeOptions.find((option) => option.size === size);
@@ -317,7 +403,7 @@ export default function ProductPage() {
         price: selectedVariant?.price ?? product.price,
         size,
         color,
-        image: activeImages[0] || product.image,
+        image: galleryImages[0] || product.image,
       });
     }
     setAdded(true);
@@ -329,10 +415,10 @@ export default function ProductPage() {
     Date.now() - new Date(product.created_at).getTime() < 1000 * 60 * 60 * 24 * 30;
 
   const nextImg = () =>
-    setSelectedImage((i) => (i + 1) % Math.max(activeImages.length, 1));
+    setSelectedImage((i) => (i + 1) % Math.max(galleryImages.length, 1));
   const prevImg = () =>
     setSelectedImage((i) =>
-      (i - 1 + activeImages.length) % Math.max(activeImages.length, 1)
+      (i - 1 + galleryImages.length) % Math.max(galleryImages.length, 1)
     );
 
   // simple touch swipe handlers for mobile gallery
@@ -389,7 +475,7 @@ export default function ProductPage() {
             <div className="lg:flex lg:gap-6" ref={heroRef}>
               {/* thumbs - desktop vertical */}
               <div className="hidden lg:flex flex-col gap-3 w-20 shrink-0">
-                {activeImages.map((img, i) => (
+                {galleryImages.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
@@ -410,7 +496,7 @@ export default function ProductPage() {
               </div>
 
               <div className="flex-1">
-                {/* main image w/ zoom */}
+                {/* main image with magnifier lens */}
                 <motion.div
                   ref={zoom.ref}
                   onMouseEnter={() => zoom.setActive(true)}
@@ -420,26 +506,44 @@ export default function ProductPage() {
                   onTouchStart={onTouchStart}
                   onTouchEnd={onTouchEnd}
                   style={{ y: parallaxY }}
-                  className="relative overflow-hidden bg-muted aspect-[3/4] cursor-zoom-in group"
+                  className="relative overflow-hidden bg-muted aspect-[3/4] cursor-none group"
                 >
                   <AnimatePresence initial={false} mode="wait">
                     <motion.img
                       key={`${selectedVariantId || selectedColorIdx}-${selectedImage}`}
-                      src={activeImages[selectedImage] || product.image}
+                      src={currentMainImage}
                       alt={product.name}
-                      initial={{ opacity: 0, scale: 1.02 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                       className="w-full h-full object-cover"
-                      style={{
-                        transformOrigin: `${zoom.pos.x}% ${zoom.pos.y}%`,
-                        transform: zoom.active ? "scale(1.6)" : "scale(1)",
-                        transition: zoom.active
-                          ? "transform 0.12s ease-out"
-                          : "transform 0.3s ease",
-                      }}
                     />
+                  </AnimatePresence>
+
+                  <AnimatePresence>
+                    {zoom.active && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.96 }}
+                        transition={{ duration: 0.18 }}
+                        className="pointer-events-none absolute rounded-full border border-white/70 shadow-[0_18px_60px_rgba(0,0,0,0.22)] overflow-hidden backdrop-blur-sm"
+                        style={{
+                          width: magnifierSize,
+                          height: magnifierSize,
+                          left: `${zoom.pos.x}%`,
+                          top: `${zoom.pos.y}%`,
+                          transform: "translate(-50%, -50%)",
+                          backgroundImage: `url(${currentMainImage})`,
+                          backgroundRepeat: "no-repeat",
+                          backgroundSize: `${magnifierScale * 100}% ${magnifierScale * 100}%`,
+                          backgroundPosition: `${magnifierBackgroundX}% ${magnifierBackgroundY}%`,
+                        }}
+                      >
+                        <div className="absolute inset-0 rounded-full ring-1 ring-black/10" />
+                      </motion.div>
+                    )}
                   </AnimatePresence>
 
                   {loadingGallery && (
@@ -463,7 +567,7 @@ export default function ProductPage() {
                   </div>
 
                   {/* arrows */}
-                  {activeImages.length > 1 && (
+                  {galleryImages.length > 1 && (
                     <>
                       <button
                         onClick={(e) => {
@@ -489,7 +593,7 @@ export default function ProductPage() {
 
                 {/* mobile dots / horizontal strip */}
                 <div className="flex lg:hidden gap-2 mt-3 overflow-x-auto pb-2 -mx-1 px-1">
-                  {activeImages.map((img, i) => (
+                  {galleryImages.map((img, i) => (
                     <button
                       key={i}
                       onClick={() => setSelectedImage(i)}
@@ -585,39 +689,45 @@ export default function ProductPage() {
               )}
 
               {/* Size */}
-              {sizeOptions.length > 0 && (
+              {hasSizeInfo && (
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground">
                       Size
                     </p>
-                    <button className="text-[11px] text-muted-foreground underline underline-offset-4 hover:text-foreground">
+                    <button
+                      type="button"
+                      onClick={() => setSizeGuideOpen(true)}
+                      className="text-[11px] text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                    >
                       Size guide
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {sizeOptions.map(({ size, stock }) => {
-                      const out = stock <= 0;
-                      const active = selectedSize === size;
-                      return (
-                        <motion.button
-                          key={size}
-                          whileTap={{ scale: 0.94 }}
-                          disabled={out}
-                          onClick={() => setSelectedSize(size)}
-                          className={`min-w-[52px] h-12 px-4 rounded-full text-sm font-medium border transition-all ${
-                            active
-                              ? "bg-foreground text-primary-foreground border-foreground"
-                              : out
-                              ? "bg-muted text-muted-foreground border-border line-through cursor-not-allowed"
-                              : "bg-background text-foreground border-border hover:border-foreground"
-                          }`}
-                        >
-                          {size}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
+                  {sizeOptions.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {sizeOptions.map(({ size, stock }) => {
+                        const out = stock <= 0;
+                        const active = selectedSize === size;
+                        return (
+                          <motion.button
+                            key={size}
+                            whileTap={{ scale: 0.94 }}
+                            disabled={out}
+                            onClick={() => setSelectedSize(size)}
+                            className={`min-w-[52px] h-12 px-4 rounded-full text-sm font-medium border transition-all ${
+                              active
+                                ? "bg-foreground text-primary-foreground border-foreground"
+                                : out
+                                ? "bg-muted text-muted-foreground border-border line-through cursor-not-allowed"
+                                : "bg-background text-foreground border-border hover:border-foreground"
+                            }`}
+                          >
+                            {size}
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -650,7 +760,7 @@ export default function ProductPage() {
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={handleAdd}
-                  disabled={outOfStock}
+                  disabled={primaryCtaDisabled}
                   className={`relative flex-1 overflow-hidden flex items-center justify-center gap-2 py-5 text-xs font-semibold tracking-[0.2em] uppercase transition-all rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
                     added
                       ? "bg-emerald-600 text-primary-foreground"
@@ -677,7 +787,7 @@ export default function ProductPage() {
                         className="flex items-center gap-2"
                       >
                         <ShoppingBag size={14} />
-                        {outOfStock ? "Out of Stock" : "Add to Cart"}
+                        {primaryCtaLabel}
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -891,7 +1001,7 @@ export default function ProductPage() {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleAdd}
-          disabled={outOfStock}
+          disabled={primaryCtaDisabled}
           className={`flex-1 h-12 rounded-full text-xs font-semibold tracking-[0.2em] uppercase flex items-center justify-center gap-2 ${
             added
               ? "bg-emerald-600 text-primary-foreground"
@@ -899,7 +1009,7 @@ export default function ProductPage() {
           } disabled:opacity-50`}
         >
           <ShoppingBag size={14} />
-          {added ? "Added" : outOfStock ? "Out of Stock" : `Add · $${displayPrice}`}
+          {added ? "Added" : primaryCtaLabel === "Add to Cart" ? `Add · $${displayPrice}` : primaryCtaLabel}
         </motion.button>
       </div>
 
@@ -921,7 +1031,7 @@ export default function ProductPage() {
               >
                 <X size={18} />
               </button>
-              {activeImages.length > 1 && (
+              {galleryImages.length > 1 && (
                 <>
                   <button
                     onClick={(e) => {
@@ -949,12 +1059,87 @@ export default function ProductPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                src={activeImages[selectedImage] || product.image}
+                src={galleryImages[selectedImage] || product.image}
                 alt={product.name}
                 className="max-w-full max-h-[90vh] object-contain"
                 onClick={(e) => e.stopPropagation()}
               />
             </motion.div>
+          )}
+        </AnimatePresence>
+      </ModalPortal>
+
+      <ModalPortal>
+        <AnimatePresence>
+          {sizeGuideOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[90] bg-black/45"
+                onClick={() => setSizeGuideOpen(false)}
+              />
+              <div className="fixed inset-0 z-[91] flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96, y: 14 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96, y: 14 }}
+                  transition={{ type: "spring", damping: 24, stiffness: 280 }}
+                  className="w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+                >
+                  <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                    <div>
+                      <p className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground mb-1">
+                        Size guide
+                      </p>
+                      <h2 className="text-lg font-semibold text-foreground">{product.name}</h2>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSizeGuideOpen(false)}
+                      className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="max-h-[calc(85vh-72px)] overflow-auto p-5">
+                    {sizeChartTable ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              {sizeChartTable.headers.map((header) => (
+                                <th
+                                  key={header}
+                                  className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                                >
+                                  {header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {sizeChartTable.rows.map((row, rowIndex) => (
+                              <tr key={rowIndex} className="border-b border-border last:border-0">
+                                {row.map((cell, cellIndex) => (
+                                  <td key={`${rowIndex}-${cellIndex}`} className="px-4 py-3 text-foreground">
+                                    {cell}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No size information is available for this product yet.</p>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+            </>
           )}
         </AnimatePresence>
       </ModalPortal>
