@@ -80,6 +80,8 @@ function validateStep0(shipping: {
   return null;
 }
 
+const normalizeReferralCode = (code: string) => code.trim().toUpperCase();
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
@@ -99,6 +101,8 @@ export default function CheckoutPage() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [stripeHandled, setStripeHandled] = useState(false);
   const [stripeFinalizing, setStripeFinalizing] = useState(() => stripeStatus === "success" && !!stripeSessionId);
+  const [referralCode, setReferralCode] = useState(() => normalizeReferralCode(getReferralCode() ?? ""));
+  const [referralTouched, setReferralTouched] = useState(false);
 
   const [shipping, setShipping] = useState({
     firstName: "", lastName: "", email: "", phone: "", address: "", city: "", state: "", zip: "", country: "US",
@@ -149,6 +153,12 @@ export default function CheckoutPage() {
       active = false;
     };
   }, [couponCode, items, totalPrice]);
+
+  useEffect(() => {
+    const referralFromUrl = normalizeReferralCode(new URLSearchParams(location.search).get("ref") ?? "");
+    if (!referralFromUrl || referralTouched) return;
+    setReferralCode(referralFromUrl);
+  }, [location.search, referralTouched]);
 
   useEffect(() => {
     if (stripeStatus !== "cancelled") return;
@@ -318,7 +328,7 @@ export default function CheckoutPage() {
 
     // ── Place order ────────────────────────────────────────────────────────
     setLoading(true);
-    const affiliateCode = getReferralCode();
+    const affiliateCode = normalizeReferralCode(referralCode) || null;
 
     if (!user) {
       toast({ title: "Sign in required", description: "Please sign in to complete the checkout.", variant: "destructive" });
@@ -382,6 +392,7 @@ export default function CheckoutPage() {
       p_tax: orderTax,
       p_total: grandTotal,
       p_affiliate_code: affiliateCode,
+      p_currency: storeCurrency,
       p_coupon_code: couponDetails?.valid ? couponDetails.code ?? couponCode : null,
       p_items: items.map((it) => ({
         product_id: String(it.id),
@@ -581,6 +592,20 @@ export default function CheckoutPage() {
                         <FloatingInput label="Last name" value={shipping.lastName} onChange={(v) => setShipping({ ...shipping, lastName: v })} />
                       </div>
                       <FloatingInput label="Email" value={shipping.email} onChange={(v) => setShipping({ ...shipping, email: v })} type="email" />
+                      <div>
+                        <FloatingInput
+                          label="Referral code"
+                          value={referralCode}
+                          onChange={(v) => {
+                            setReferralTouched(true);
+                            setReferralCode(v);
+                          }}
+                          placeholder="Enter a referral code"
+                        />
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Optional. If you came through a referral link, we will prefill this for you.
+                        </p>
+                      </div>
                       <div className="grid grid-cols-3 gap-3 sm:gap-4 items-end">
                         <div>
                           <label className="text-[11px] text-muted-foreground mb-1 block">Country</label>

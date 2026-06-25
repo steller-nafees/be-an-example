@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
 
   const { data: order, error: orderError } = await adminSupabase
     .from("orders")
-    .select("id, formatted_id, user_id, email, total, status, coupon_code")
+    .select("*")
     .eq("id", body.orderId)
     .maybeSingle();
 
@@ -112,6 +112,7 @@ Deno.serve(async (req) => {
 
   const brandValue = brandSetting?.value as { currency?: unknown } | null | undefined;
   const storeCurrency =
+    normalizeCurrencyCode(order.currency) ??
     normalizeCurrencyCode(body.currency) ??
     normalizeCurrencyCode(brandValue?.currency) ??
     "gbp";

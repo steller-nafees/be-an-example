@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
   }
 
   const sessionCurrency = normalizeCurrencyCode(session.currency);
-  const expectedCurrency = normalizeCurrencyCode(session.metadata?.currency);
+  const expectedCurrency = normalizeCurrencyCode(order.currency) ?? normalizeCurrencyCode(session.metadata?.currency);
   if (expectedCurrency && sessionCurrency && sessionCurrency !== expectedCurrency) {
     return json(
       {

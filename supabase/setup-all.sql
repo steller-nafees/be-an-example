@@ -98,6 +98,7 @@ create table if not exists public.orders (
   first_name      text, last_name text, phone text,
   address         text, city text, state text, zip text,
   shipping_method text not null default 'standard',
+  currency        text not null default 'gbp',
   delivery_fee    numeric(10,2) not null default 0,
   subtotal        numeric(10,2) not null default 0,
   tax             numeric(10,2) not null default 0,
@@ -138,12 +139,14 @@ create or replace function public.create_order_with_items(
   p_state text,
   p_zip text,
   p_shipping_method text,
+  p_currency text default null,
   p_delivery_fee numeric,
   p_subtotal numeric,
   p_tax numeric,
   p_total numeric,
   p_affiliate_code text,
-  p_items jsonb
+  p_items jsonb,
+  p_currency text default null
 )
 returns public.orders
 language plpgsql security definer set search_path = public as $$
@@ -160,6 +163,9 @@ begin
   -- Validate delivery fee is non-negative
   if p_delivery_fee < 0 then
     raise exception 'delivery fee cannot be negative';
+  end if;
+  if coalesce(nullif(trim(coalesce(p_currency, '')), ''), '') = '' then
+    p_currency := 'gbp';
   end if;
 
   -- Validate subtotal is non-negative
@@ -187,10 +193,10 @@ begin
 
   insert into public.orders (
     formatted_id, user_id, email, first_name, last_name, phone, address, city, state, zip,
-    shipping_method, delivery_fee, subtotal, tax, total, status, affiliate_code
+    shipping_method, currency, delivery_fee, subtotal, tax, total, status, affiliate_code
   ) values (
     v_formatted_id, p_user_id, p_email, p_first_name, p_last_name, p_phone, p_address, p_city, p_state, p_zip,
-    p_shipping_method, p_delivery_fee, p_subtotal, p_tax, p_total, 'pending', p_affiliate_code
+    p_shipping_method, p_currency, p_delivery_fee, p_subtotal, p_tax, p_total, 'pending', p_affiliate_code
   ) returning * into new_order;
 
   insert into public.order_items (

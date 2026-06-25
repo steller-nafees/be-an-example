@@ -164,6 +164,7 @@ create table if not exists public.orders (
   first_name      text, last_name text, phone text,
   address         text, city text, state text, zip text,
   shipping_method text not null default 'standard',
+  currency        text not null default 'gbp',
   delivery_fee    numeric(10,2) not null default 0,
   subtotal        numeric(10,2) not null default 0,
   tax             numeric(10,2) not null default 0,

@@ -87,7 +87,8 @@ alter table public.orders
   add column if not exists coupon_title text,
   add column if not exists coupon_discount_type text,
   add column if not exists coupon_discount_value numeric(10,2),
-  add column if not exists discount_amount numeric(10,2) not null default 0;
+  add column if not exists discount_amount numeric(10,2) not null default 0,
+  add column if not exists currency text not null default 'gbp';
 
 create index if not exists orders_coupon_idx on public.orders(coupon_id);
 create index if not exists orders_coupon_code_idx on public.orders(coupon_code);
@@ -337,7 +338,8 @@ create or replace function public.create_order_with_items(
   p_total numeric,
   p_affiliate_code text,
   p_items jsonb,
-  p_coupon_code text default null
+  p_coupon_code text default null,
+  p_currency text default null
 )
 returns public.orders
 language plpgsql security definer set search_path = public as $$
@@ -360,6 +362,10 @@ declare
 begin
   if auth.uid() is null or auth.uid() <> p_user_id then
     raise exception 'invalid user';
+  end if;
+
+  if coalesce(nullif(trim(coalesce(p_currency, '')), ''), '') = '' then
+    p_currency := 'gbp';
   end if;
 
   if p_delivery_fee < 0 then raise exception 'delivery fee cannot be negative'; end if;
@@ -406,11 +412,11 @@ begin
   insert into public.orders (
     formatted_id, user_id, email, first_name, last_name, phone, address, city, state, zip,
     country, shipping_method, delivery_fee, subtotal, tax, total, status, affiliate_code,
-    coupon_id, coupon_code, coupon_title, coupon_discount_type, coupon_discount_value, discount_amount
+    coupon_id, coupon_code, coupon_title, coupon_discount_type, coupon_discount_value, discount_amount, currency
   ) values (
     v_formatted_id, p_user_id, p_email, p_first_name, p_last_name, p_phone, p_address, p_city, p_state, p_zip,
     coalesce(nullif(p_country,''), 'US'), p_shipping_method, p_delivery_fee, p_subtotal, v_expected_tax, v_expected_total, 'pending', p_affiliate_code,
-    v_coupon_id, v_coupon_code_result, v_coupon_title_result, v_coupon_discount_type_result, v_coupon_discount_value_result, v_discount_amount
+    v_coupon_id, v_coupon_code_result, v_coupon_title_result, v_coupon_discount_type_result, v_coupon_discount_value_result, v_discount_amount, p_currency
   ) returning * into new_order;
 
   if v_coupon_valid then
