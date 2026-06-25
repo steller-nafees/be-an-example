@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { Building2, Calendar, Mail, MapPin, Phone } from "lucide-react";
-import { useLogo } from "@/context/LogoContext";
+import { useBrandSettings, useLogo } from "@/context/LogoContext";
 import BrandLogo from "@/components/BrandLogo";
 import type { Order } from "@/context/OrderContext";
 import { formatCurrency } from "@/lib/currency";
@@ -11,6 +11,7 @@ interface InvoiceProps {
 
 export default function Invoice({ order }: InvoiceProps) {
   const { logo } = useLogo();
+  const { settings } = useBrandSettings();
   const shippingFeeLabel = {
     standard: "Standard Shipping",
     express: "Standard Shipping",
@@ -25,15 +26,15 @@ export default function Invoice({ order }: InvoiceProps) {
           <div>
             {logo ? (
               <div className="mb-2">
-                <BrandLogo baseHeight={40} alt="Company logo" />
+                <BrandLogo baseHeight={40} alt={settings.brandName} />
               </div>
             ) : (
               <div className="flex items-center gap-2 mb-2">
                 <Building2 className="w-6 h-6" />
-                <h1 className="text-3xl font-bold text-gray-900">Flownexive</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{settings.brandName}</h1>
               </div>
             )}
-            <p className="text-sm text-gray-600">Fashion & Apparel</p>
+            <p className="text-sm text-gray-600">{settings.tagline}</p>
           </div>
           <div className="text-right">
             <h2 className="text-2xl font-bold text-gray-900 mb-1">INVOICE</h2>
@@ -152,7 +153,7 @@ export default function Invoice({ order }: InvoiceProps) {
           Thank you for your purchase! Your order is being processed.
         </p>
         <p className="text-xs text-gray-500">
-          Please keep this invoice for your records. Questions? Contact us at support@flownexive.com
+          Please keep this invoice for your records. Questions? Contact us at {settings.supportEmail}
         </p>
       </div>
     </div>

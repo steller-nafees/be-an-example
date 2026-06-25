@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.0";
 type CheckoutRequest = {
   orderId?: string;
   origin?: string;
+  currency?: string;
 };
 
 const corsHeaders = {
@@ -17,6 +18,42 @@ const json = (body: unknown, status = 200) =>
   });
 
 const stripeFormEncode = (value: string) => value.replace(/\r?\n/g, "\n");
+
+const normalizeCurrencyCode = (value: unknown) => {
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  const symbolMap: Record<string, string> = {
+    "£": "gbp",
+    "$": "usd",
+    "€": "eur",
+    "¥": "jpy",
+  };
+
+  if (trimmed in symbolMap) return symbolMap[trimmed];
+
+  const alphaCode = trimmed.replace(/[^a-z]/g, "");
+  if (alphaCode.length === 3) return alphaCode;
+
+  const keywordMap: Record<string, string> = {
+    pound: "gbp",
+    pounds: "gbp",
+    sterling: "gbp",
+    gbp: "gbp",
+    dollar: "usd",
+    dollars: "usd",
+    usd: "usd",
+    euro: "eur",
+    euros: "eur",
+    eur: "eur",
+    yen: "jpy",
+    jpy: "jpy",
+  };
+
+  return keywordMap[trimmed] ?? null;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -74,7 +111,10 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   const brandValue = brandSetting?.value as { currency?: unknown } | null | undefined;
-  const storeCurrency = typeof brandValue?.currency === "string" ? brandValue.currency.trim().toLowerCase() : "gbp";
+  const storeCurrency =
+    normalizeCurrencyCode(body.currency) ??
+    normalizeCurrencyCode(brandValue?.currency) ??
+    "gbp";
 
   const params = new URLSearchParams();
   params.set("mode", "payment");
@@ -85,6 +125,7 @@ Deno.serve(async (req) => {
   params.set("metadata[order_id]", order.id);
   params.set("metadata[formatted_id]", order.formatted_id ?? "");
   params.set("metadata[user_id]", user.id);
+  params.set("metadata[currency]", storeCurrency);
   if (order.coupon_code) params.set("metadata[coupon_code]", order.coupon_code);
   params.set("line_items[0][quantity]", "1");
   params.set("line_items[0][price_data][currency]", storeCurrency || "gbp");

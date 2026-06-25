@@ -87,15 +87,18 @@ export default function CheckoutPage() {
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
   const { settings } = useBrandSettings();
+  const stripeStatus = new URLSearchParams(location.search).get("stripe_status");
+  const stripeSessionId = new URLSearchParams(location.search).get("session_id");
   const storeCurrency = settings.currency || "gbp";
   const money = (value: number) => formatCurrency(value, storeCurrency);
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => stripeStatus === "success" && !!stripeSessionId);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [stripeHandled, setStripeHandled] = useState(false);
+  const [stripeFinalizing, setStripeFinalizing] = useState(() => stripeStatus === "success" && !!stripeSessionId);
 
   const [shipping, setShipping] = useState({
     firstName: "", lastName: "", email: "", phone: "", address: "", city: "", state: "", zip: "", country: "US",
@@ -147,9 +150,6 @@ export default function CheckoutPage() {
     };
   }, [couponCode, items, totalPrice]);
 
-  const stripeStatus = new URLSearchParams(location.search).get("stripe_status");
-  const stripeSessionId = new URLSearchParams(location.search).get("session_id");
-
   useEffect(() => {
     if (stripeStatus !== "cancelled") return;
     toast({
@@ -170,12 +170,15 @@ export default function CheckoutPage() {
         description: "Please sign in to finish your Stripe order.",
         variant: "destructive",
       });
+      setStripeFinalizing(false);
+      window.history.replaceState({}, "", window.location.pathname);
       return;
     }
 
     let active = true;
 
     const finalizeStripeCheckout = async () => {
+      setStripeFinalizing(true);
       setLoading(true);
       try {
         const { data, error } = await supabase.functions.invoke("stripe-finalize-checkout", {
@@ -245,6 +248,7 @@ export default function CheckoutPage() {
         setOrderPlaced(true);
         clearCart();
         setStripeHandled(true);
+        setStripeFinalizing(false);
         window.history.replaceState({}, "", window.location.pathname);
       } catch (err: any) {
         toast({
@@ -252,6 +256,8 @@ export default function CheckoutPage() {
           description: err?.message || "Please try the checkout again.",
           variant: "destructive",
         });
+        setStripeFinalizing(false);
+        window.history.replaceState({}, "", window.location.pathname);
       } finally {
         if (active) setLoading(false);
       }
@@ -400,6 +406,7 @@ export default function CheckoutPage() {
       body: {
         orderId: dbOrder.id,
         origin: window.location.origin,
+        currency: storeCurrency,
       },
     });
 
@@ -417,6 +424,25 @@ export default function CheckoutPage() {
   };
 
   const back = () => { if (step > 0) goTo(step - 1); };
+
+  // ── Stripe processing screen ────────────────────────────────────────────────
+  if (stripeStatus === "success" && stripeSessionId && stripeFinalizing && !orderPlaced) {
+    return (
+      <main className="pt-24 pb-12 bg-background min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-lg mx-auto px-4 sm:px-6 text-center">
+          <div className="mx-auto w-20 h-20 rounded-full border border-border bg-muted/40 flex items-center justify-center mb-6">
+            <Loader2 size={30} className="animate-spin text-foreground" />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-foreground mb-3">
+            Processing your order
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Stripe payment was successful. We’re finalizing your order and preparing the confirmation page.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   // ── Success screen ─────────────────────────────────────────────────────────
   if (orderPlaced && createdOrder) {
