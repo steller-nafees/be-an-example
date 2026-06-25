@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
   );
   params.set(
     "line_items[0][price_data][product_data][description]",
-    stripeFormEncode("Test mode checkout - no real money will be charged."),
+    stripeFormEncode("Secure Stripe Checkout for your order."),
   );
   params.set("payment_method_types[0]", "card");
   params.set("allow_promotion_codes", "true");

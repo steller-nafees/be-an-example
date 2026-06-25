@@ -164,7 +164,7 @@ export default function CheckoutPage() {
     if (stripeStatus !== "cancelled") return;
     toast({
       title: "Checkout canceled",
-      description: "Your Stripe test checkout was canceled. Your cart is still saved.",
+      description: "Your Stripe checkout was canceled. Your cart is still saved.",
       variant: "destructive",
     });
     window.history.replaceState({}, "", window.location.pathname);
@@ -318,7 +318,7 @@ export default function CheckoutPage() {
       const err = validateStep0(shipping);
       if (err) { toast({ title: "Incomplete details", description: err, variant: "destructive" }); return; }
     }
-    // Step 1 (delivery) and Step 2 (Stripe test checkout info) always have defaults or informational content only.
+    // Step 1 (delivery) and Step 2 (payment) always have defaults or informational content only.
     // ──────────────────────────────────────────────────────────────────────
 
     if (step < 3) {
@@ -424,7 +424,7 @@ export default function CheckoutPage() {
     if (stripeErr || !stripeSession?.url) {
       toast({
         title: "Stripe checkout could not be started",
-        description: stripeErr?.message || "Unable to create the test checkout session.",
+        description: stripeErr?.message || "Unable to create the checkout session.",
         variant: "destructive",
       });
       setLoading(false);
@@ -693,17 +693,11 @@ export default function CheckoutPage() {
                             <CreditCard size={16} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground">Stripe test checkout</p>
+                            <p className="text-sm font-semibold text-foreground">Stripe Checkout</p>
                               <p className="text-sm text-muted-foreground mt-1">
-                              Your payment will be completed on Stripe's secure checkout page. Use a Stripe test card there.
+                              Your payment will be completed on Stripe's secure checkout page.
                             </p>
                           </div>
-                        </div>
-                        <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground space-y-2">
-                          <p className="font-medium text-foreground">Test card for Stripe Checkout</p>
-                          <p>Card number: 4242 4242 4242 4242</p>
-                          <p>Expiry: any future date</p>
-                          <p>CVC: any 3 digits</p>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Lock size={12} className="flex-shrink-0" />
@@ -763,7 +757,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <CreditCard size={14} className="text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">Stripe Checkout, test mode</p>
+                          <p className="text-sm text-muted-foreground">Stripe Checkout</p>
                         </div>
                       </div>
 
@@ -821,7 +815,7 @@ export default function CheckoutPage() {
 
               {step === 3 && (
                 <p className="text-xs sm:text-sm text-muted-foreground text-center mt-4 flex items-center justify-center gap-2">
-                  <Lock size={12} className="flex-shrink-0" /> Secure Stripe test checkout - no real money is charged
+                  <Lock size={12} className="flex-shrink-0" /> Secure Stripe checkout
                 </p>
               )}
             </div>

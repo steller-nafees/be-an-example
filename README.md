@@ -2,13 +2,13 @@
 
 TODO: Document your project here
 
-## Stripe test checkout
+## Stripe checkout
 
-To use the Stripe test flow added to checkout, set these Supabase Edge Function secrets:
+To use live Stripe Checkout, set these Supabase Edge Function secrets:
 
-- `STRIPE_SECRET_KEY` with your Stripe test secret key
+- `STRIPE_SECRET_KEY` with your live Stripe secret key
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 
-The app redirects to Stripe Checkout in test mode. Use the Stripe test card `4242 4242 4242 4242` with any future expiry date and any CVC.
+The app redirects to Stripe Checkout using your connected Stripe account. Configure your live payment methods in the Stripe Dashboard before going live.
