@@ -33,6 +33,7 @@ interface OrderItemRow {
 interface OrderRow {
   id: string;
   user_id: string | null;
+  affiliate_code: string | null;
   email: string;
   first_name: string | null;
   last_name: string | null;
@@ -54,6 +55,7 @@ const fullName = (o: OrderRow) =>
   [o.first_name, o.last_name].filter(Boolean).join(" ") || o.email;
 const shipAddr = (o: OrderRow) =>
   [o.address, o.city, o.state, o.zip].filter(Boolean).join(", ") || "—";
+const referralCode = (o: OrderRow) => o.affiliate_code || "—";
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -124,7 +126,8 @@ export default function AdminOrders() {
           !q ||
           fullName(o).toLowerCase().includes(q) ||
           o.email.toLowerCase().includes(q) ||
-          o.id.toLowerCase().includes(q);
+          o.id.toLowerCase().includes(q) ||
+          (o.affiliate_code || "").toLowerCase().includes(q);
         const matchesStatus = statusFilter === "all" || o.status === statusFilter;
         return matchesSearch && matchesStatus;
       }),
@@ -189,6 +192,7 @@ export default function AdminOrders() {
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Order</th>
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Customer</th>
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Date</th>
+                  <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Referral</th>
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Status</th>
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Printful</th>
                   <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">Update</th>
@@ -213,6 +217,9 @@ export default function AdminOrders() {
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground cursor-pointer" onClick={() => setSelectedId(order.id)}>
                       {new Date(order.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-mono text-foreground/80 cursor-pointer" onClick={() => setSelectedId(order.id)}>
+                      {referralCode(order)}
                     </td>
                     <td className="px-4 py-3 cursor-pointer" onClick={() => setSelectedId(order.id)}>
                       <StatusBadge status={order.status} />
@@ -341,6 +348,11 @@ export default function AdminOrders() {
                   <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Customer</h3>
                   <p className="text-sm text-foreground">{fullName(selected)}</p>
                   <p className="text-xs text-muted-foreground">{selected.email}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Referral</h3>
+                  <p className="text-sm font-mono text-foreground">{referralCode(selected)}</p>
                 </div>
 
                 <div>

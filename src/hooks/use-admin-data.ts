@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 export interface AdminOrderLite {
   id: string;
   user_id: string | null;
+  affiliate_code: string | null;
   email: string;
   first_name: string | null;
   last_name: string | null;
@@ -18,7 +19,7 @@ export const useAdminOrders = () => {
     queryFn: async (): Promise<AdminOrderLite[]> => {
       const { data } = await supabase
         .from("orders")
-        .select("id,user_id,email,first_name,last_name,total,status,created_at")
+        .select("id,user_id,affiliate_code,email,first_name,last_name,total,status,created_at")
         .order("created_at", { ascending: false });
       return (data as AdminOrderLite[]) ?? [];
     },

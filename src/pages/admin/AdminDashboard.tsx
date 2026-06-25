@@ -78,6 +78,9 @@ export default function AdminDashboard() {
                     {[order.first_name, order.last_name].filter(Boolean).join(" ") || order.email}
                   </p>
                   <p className="text-xs text-muted-foreground">ORD-{order.id.slice(0, 8).toUpperCase()}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono">
+                    Referral: {order.affiliate_code || "—"}
+                  </p>
                 </div>
                 <div className="text-right flex items-center gap-3">
                   <StatusBadge status={order.status} />
