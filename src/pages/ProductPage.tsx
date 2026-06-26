@@ -22,6 +22,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import ProductCard from "@/components/ProductCard";
 import ModalPortal from "@/components/ModalPortal";
+import OptimizedImage from "@/components/OptimizedImage";
 import {
   Accordion,
   AccordionItem,
@@ -95,6 +96,29 @@ export default function ProductPage() {
   const { data: variants = [] } = useProductVariants(id);
   const { addItem } = useCart();
   const { toggle, isWishlisted } = useWishlist();
+
+  useEffect(() => {
+    if (!product) return;
+
+    const title = product.seo_title?.trim() || `${product.name} — BE AN EXAMPLE`;
+    const description =
+      product.seo_description?.trim() ||
+      product.description?.trim() ||
+      "Premium streetwear built to lead by example.";
+
+    document.title = title;
+
+    const setMeta = (selector: string, value: string) => {
+      const element = document.head.querySelector<HTMLMetaElement>(selector);
+      if (element) element.content = value;
+    };
+
+    setMeta('meta[name="description"]', description);
+    setMeta('meta[property="og:title"]', title);
+    setMeta('meta[property="og:description"]', description);
+    setMeta('meta[name="twitter:title"]', title);
+    setMeta('meta[name="twitter:description"]', description);
+  }, [product]);
 
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -486,10 +510,11 @@ export default function ProductPage() {
                         : "opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <img
+                    <OptimizedImage
                       src={img}
                       alt=""
-                      loading="lazy"
+                      width={160}
+                      height={192}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -510,16 +535,22 @@ export default function ProductPage() {
                   className="relative overflow-hidden bg-muted aspect-[3/4] cursor-none group"
                 >
                   <AnimatePresence initial={false} mode="wait">
-                    <motion.img
+                    <motion.div
                       key={`${selectedVariantId || selectedColorIdx}-${selectedImage}`}
-                      src={currentMainImage}
-                      alt={product.name}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                      className="w-full h-full object-cover"
-                    />
+                      className="w-full h-full"
+                    >
+                      <OptimizedImage
+                        src={currentMainImage}
+                        alt={product.name}
+                        width={960}
+                        height={1280}
+                        className="w-full h-full object-cover"
+                      />
+                    </motion.div>
                   </AnimatePresence>
 
                   <AnimatePresence>
@@ -604,9 +635,11 @@ export default function ProductPage() {
                           : "opacity-60"
                       }`}
                     >
-                      <img
+                      <OptimizedImage
                         src={img}
                         alt=""
+                        width={160}
+                        height={192}
                         className="w-full h-full object-cover"
                       />
                     </button>
@@ -838,9 +871,38 @@ export default function ProductPage() {
                     Materials & Care
                   </AccordionTrigger>
                   <AccordionContent className="text-sm text-muted-foreground leading-relaxed space-y-1">
-                    <p>· 100% organic combed cotton, 280 GSM.</p>
-                    <p>· Machine wash cold, inside out.</p>
-                    <p>· Tumble dry low. Do not bleach.</p>
+                    {product.materials_care?.trim() ? (
+                      (() => {
+                        const lines = product.materials_care
+                          .split(/\r?\n/)
+                          .map((line) => line.trim())
+                          .filter(Boolean);
+
+                        const bulletLines = lines.map((line) =>
+                          line.replace(/^\s*([*\-•·]\s*)?/, '').trim()
+                        );
+
+                        return lines.some((line) => /^\s*([*\-•·])\s+/.test(line)) ? (
+                          <ul className="list-disc pl-5 space-y-1">
+                            {bulletLines.map((line, index) => (
+                              <li key={index}>{line}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="space-y-1">
+                            {bulletLines.map((line, index) => (
+                              <p key={index}>{line}</p>
+                            ))}
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <>
+                        <p>· 100% organic combed cotton, 280 GSM.</p>
+                        <p>· Machine wash cold, inside out.</p>
+                        <p>· Tumble dry low. Do not bleach.</p>
+                      </>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="ship" className="border-border">
@@ -1054,17 +1116,23 @@ export default function ProductPage() {
                   </button>
                 </>
               )}
-              <motion.img
+              <motion.div
                 key={selectedImage}
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                src={galleryImages[selectedImage] || product.image}
-                alt={product.name}
-                className="max-w-full max-h-[90vh] object-contain"
+                className="max-w-full max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
-              />
+              >
+                <OptimizedImage
+                  src={galleryImages[selectedImage] || product.image}
+                  alt={product.name}
+                  width={960}
+                  height={1280}
+                  className="max-w-full max-h-[90vh] object-contain"
+                />
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

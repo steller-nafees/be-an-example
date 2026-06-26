@@ -91,6 +91,9 @@ const emptyDraft = (): ProductInput => ({
   colors: [],
   size_chart: [],
   description: "",
+  materials_care: "",
+  seo_title: "",
+  seo_description: "",
   rating: 5,
   reviews: 0,
   stock: 0,
@@ -182,6 +185,14 @@ export default function AdminProducts() {
     [products, search]
   );
 
+  const productCategories = useMemo(
+    () =>
+      Array.from(new Set([...CATEGORIES, ...products.map((p) => p.category)])).sort(),
+    [products]
+  );
+
+  const [categoryInputOpen, setCategoryInputOpen] = useState(false);
+
   // Load existing colors+variants when editing an existing product
   const editingIsExisting = !!(editing && products.find((p) => p.id === editing.id));
   const { data: existingColors } = useProductColors(editingIsExisting ? editing!.id : undefined);
@@ -219,14 +230,17 @@ export default function AdminProducts() {
     setColorsDraft([]);
     setSizeChartJson(SIZE_CHART_TEMPLATE);
     setEditing(emptyDraft());
+    setCategoryInputOpen(false);
   };
   const openEdit = (p: Product) => {
     setColorsDraft([]);
     setSizeChartJson(JSON.stringify(p.size_chart ?? [], null, 2));
     setEditing({ ...p, published: p.published ?? true, scheduled_at: p.scheduled_at ?? null });
+    setCategoryInputOpen(!productCategories.includes(p.category));
   };
   const close = () => {
     setEditing(null);
+    setCategoryInputOpen(false);
     setColorsDraft([]);
     setSizeChartJson(SIZE_CHART_TEMPLATE);
   };
@@ -785,14 +799,70 @@ export default function AdminProducts() {
                   <textarea rows={3} value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className={inputCls + " resize-none"} />
                 </Field>
 
+                <Field label="SEO title">
+                  <input
+                    value={editing.seo_title}
+                    onChange={(e) => setEditing({ ...editing, seo_title: e.target.value })}
+                    className={inputCls}
+                    placeholder="Optional meta title for search results"
+                  />
+                </Field>
+
+                <Field label="SEO description">
+                  <textarea
+                    rows={2}
+                    value={editing.seo_description}
+                    onChange={(e) => setEditing({ ...editing, seo_description: e.target.value })}
+                    className={inputCls + " resize-none"}
+                    placeholder="Optional meta description for search results"
+                  />
+                </Field>
+
+                <Field label="Materials & Care">
+                  <textarea
+                    rows={3}
+                    value={editing.materials_care}
+                    onChange={(e) => setEditing({ ...editing, materials_care: e.target.value })}
+                    className={inputCls + " resize-none"}
+                    placeholder="e.g. 100% organic cotton. Machine wash cold. Do not bleach."
+                  />
+                </Field>
+
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Price (GBP)">
                     <input type="number" min={0} step="0.01" value={editing.price} onChange={(e) => setEditing({ ...editing, price: parseFloat(e.target.value) || 0 })} className={inputCls} />
                   </Field>
                   <Field label="Category">
-                    <select value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })} className={inputCls}>
-                      {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <div className="grid gap-2">
+                      <select
+                        value={productCategories.includes(editing.category) ? editing.category : "__custom__"}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "__custom__") {
+                            setCategoryInputOpen(true);
+                            setEditing({ ...editing, category: "" });
+                          } else {
+                            setCategoryInputOpen(false);
+                            setEditing({ ...editing, category: value });
+                          }
+                        }}
+                        className={inputCls}
+                      >
+                        {productCategories.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                        <option value="__custom__">Add new category...</option>
+                      </select>
+                      {(categoryInputOpen || !productCategories.includes(editing.category)) && (
+                        <input
+                          type="text"
+                          value={editing.category}
+                          onChange={(e) => setEditing({ ...editing, category: e.target.value })}
+                          className={inputCls}
+                          placeholder="Enter a new category"
+                        />
+                      )}
+                    </div>
                   </Field>
                 </div>
 

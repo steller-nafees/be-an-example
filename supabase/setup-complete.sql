@@ -27,6 +27,9 @@ create table if not exists public.products (
   colors       jsonb not null default '[]'::jsonb,
   size_chart   jsonb not null default '[]'::jsonb,
   description  text not null default '',
+  materials_care text not null default '',
+  seo_title    text not null default '',
+  seo_description text not null default '',
   rating       numeric(2,1) not null default 5.0,
   reviews      integer not null default 0,
   stock        integer not null default 0,
@@ -253,6 +256,12 @@ create policy "Collections: admin write" on public.collections for all to authen
 
 alter table public.products
   add column if not exists collection_id uuid references public.collections(id) on delete set null;
+alter table public.products
+  add column if not exists materials_care text not null default '';
+alter table public.products
+  add column if not exists seo_title text not null default '';
+alter table public.products
+  add column if not exists seo_description text not null default '';
 alter table public.products
   add column if not exists scheduled_at date;
 create index if not exists products_collection_idx on public.products(collection_id);

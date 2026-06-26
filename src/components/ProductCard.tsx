@@ -6,6 +6,7 @@ import { useProductColors, useProductVariants } from "@/hooks/use-variants";
 import { Link } from "react-router-dom";
 import type { Product } from "@/lib/products";
 import { formatCurrency } from "@/lib/currency";
+import OptimizedImage from "@/components/OptimizedImage";
 
 interface Props {
   product: Product;
@@ -32,17 +33,19 @@ export default function ProductCard({ product, index = 0 }: Props) {
       className="group"
     >
       <Link to={`/product/${product.id}`} className="block relative overflow-hidden bg-muted mb-4 aspect-[3/4]">
-        <img
+        <OptimizedImage
           src={product.archive_image || product.image}
           alt={product.name}
-          loading="lazy"
+          width={360}
+          height={480}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         {product.archive_hover_image && (
-          <img
+          <OptimizedImage
             src={product.archive_hover_image}
             alt={`${product.name} hover`}
-            loading="lazy"
+            width={360}
+            height={480}
             className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
           />
         )}

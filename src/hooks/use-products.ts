@@ -21,6 +21,9 @@ export interface Product {
   colors: ProductColor[]
   size_chart?: SizeChartRow[]
   description: string
+  materials_care: string
+  seo_title: string
+  seo_description: string
   rating: number
   reviews: number
   stock: number
@@ -43,6 +46,10 @@ const normalizeProduct = (product: Product): Product => ({
   sizes: product.sizes || [],
   colors: product.colors || [],
   size_chart: Array.isArray(product.size_chart) ? product.size_chart : [],
+  description: product.description ?? '',
+  materials_care: product.materials_care ?? '',
+  seo_title: product.seo_title ?? '',
+  seo_description: product.seo_description ?? '',
   rating: Number(product.rating) || 0,
   reviews: Number(product.reviews) || 0,
   stock: Number(product.stock) || 0,
@@ -95,6 +102,9 @@ const productPayload = (p: ProductInput) => ({
   colors: p.colors,
   size_chart: p.size_chart ?? [],
   description: p.description,
+  seo_title: p.seo_title ?? '',
+  seo_description: p.seo_description ?? '',
+  materials_care: p.materials_care ?? '',
   rating: p.rating,
   reviews: p.reviews,
   stock: p.stock,
