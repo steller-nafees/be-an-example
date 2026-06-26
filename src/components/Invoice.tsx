@@ -153,7 +153,7 @@ export default function Invoice({ order }: InvoiceProps) {
           Thank you for your purchase! Your order is being processed.
         </p>
         <p className="text-xs text-gray-500">
-          Please keep this invoice for your records. Questions? Contact us at {settings.supportEmail}
+          Please keep this invoice for your records. Any Questions? Contact us at {settings.supportEmail}
         </p>
       </div>
     </div>
