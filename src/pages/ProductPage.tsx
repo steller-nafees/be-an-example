@@ -86,6 +86,10 @@ function formatScheduledDate(value?: string | null) {
   });
 }
 
+function createHtmlMarkup(value?: string | null) {
+  return { __html: value ?? "" };
+}
+
 /* ---------------- page ---------------- */
 
 export default function ProductPage() {
@@ -688,9 +692,6 @@ export default function ProductPage() {
                 <p className="text-xs text-muted-foreground mb-6">SKU: {selectedVariant.sku}</p>
               )}
 
-              <p className="text-[15px] text-muted-foreground leading-relaxed mb-10 max-w-md">
-                {product.description}
-              </p>
               <p className="text-sm text-muted-foreground mb-10 max-w-md">
                 Free shipping is included on every order, no additional delivery charges.
               </p>
@@ -862,46 +863,23 @@ export default function ProductPage() {
                   <AccordionTrigger className="text-[11px] font-semibold tracking-[0.2em] uppercase">
                     Description
                   </AccordionTrigger>
-                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                    {product.description} Crafted with intention, designed to outlast trends. Wear it as a reminder — be an example.
-                  </AccordionContent>
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+                  <div dangerouslySetInnerHTML={createHtmlMarkup(product.description)} />
+                </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="mat" className="border-border">
                   <AccordionTrigger className="text-[11px] font-semibold tracking-[0.2em] uppercase">
                     Materials & Care
                   </AccordionTrigger>
-                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed space-y-1">
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert">
                     {product.materials_care?.trim() ? (
-                      (() => {
-                        const lines = product.materials_care
-                          .split(/\r?\n/)
-                          .map((line) => line.trim())
-                          .filter(Boolean);
-
-                        const bulletLines = lines.map((line) =>
-                          line.replace(/^\s*([*\-•·]\s*)?/, '').trim()
-                        );
-
-                        return lines.some((line) => /^\s*([*\-•·])\s+/.test(line)) ? (
-                          <ul className="list-disc pl-5 space-y-1">
-                            {bulletLines.map((line, index) => (
-                              <li key={index}>{line}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="space-y-1">
-                            {bulletLines.map((line, index) => (
-                              <p key={index}>{line}</p>
-                            ))}
-                          </div>
-                        );
-                      })()
+                      <div dangerouslySetInnerHTML={createHtmlMarkup(product.materials_care)} />
                     ) : (
-                      <>
+                      <div className="space-y-1">
                         <p>· 100% organic combed cotton, 280 GSM.</p>
                         <p>· Machine wash cold, inside out.</p>
                         <p>· Tumble dry low. Do not bleach.</p>
-                      </>
+                      </div>
                     )}
                   </AccordionContent>
                 </AccordionItem>

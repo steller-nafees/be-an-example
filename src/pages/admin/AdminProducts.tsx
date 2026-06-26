@@ -795,8 +795,14 @@ export default function AdminProducts() {
                   <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className={inputCls} placeholder="e.g. Noir Hoodie" />
                 </Field>
 
-                <Field label="Description">
-                  <textarea rows={3} value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className={inputCls + " resize-none"} />
+                <Field label="Description (HTML allowed)">
+                  <textarea
+                    rows={4}
+                    value={editing.description}
+                    onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                    className={inputCls + " resize-none min-h-[120px]"}
+                    placeholder="<p>Designed to last with premium materials.</p>"
+                  />
                 </Field>
 
                 <Field label="SEO title">
@@ -818,13 +824,13 @@ export default function AdminProducts() {
                   />
                 </Field>
 
-                <Field label="Materials & Care">
+                <Field label="Materials & Care (HTML allowed)">
                   <textarea
-                    rows={3}
+                    rows={4}
                     value={editing.materials_care}
                     onChange={(e) => setEditing({ ...editing, materials_care: e.target.value })}
-                    className={inputCls + " resize-none"}
-                    placeholder="e.g. 100% organic cotton. Machine wash cold. Do not bleach."
+                    className={inputCls + " resize-none min-h-[120px]"}
+                    placeholder="<ul><li>100% organic cotton</li><li>Machine wash cold</li><li>Do not bleach.</li></ul>"
                   />
                 </Field>
 
