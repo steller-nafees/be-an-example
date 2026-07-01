@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check, Loader2, MousePointerClick } from "lucide-react";
 import { useMyAffiliate, useMyClicks } from "@/hooks/use-affiliate";
 import { supabase } from "@/lib/supabase";
+import { productPath } from "@/lib/product-url";
 
 export default function AffiliateLinks() {
   const { data: affiliate, isLoading } = useMyAffiliate();
