@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowRight, Award, Leaf, Package, ShieldCheck, Target, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useBrandSettings } from "@/context/LogoContext";
+import Seo from "@/components/Seo";
 
 export default function AboutPage() {
   const { settings } = useBrandSettings();

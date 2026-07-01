@@ -4,6 +4,7 @@ import { SlidersHorizontal, X, Search } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useCollections } from "@/hooks/use-collections";
 import ProductCard from "@/components/ProductCard";
+import Seo from "@/components/Seo";
 import { useSearchParams } from "react-router-dom";
 
 const categories = ["all", "hoodies", "tshirts", "accessories"] as const;

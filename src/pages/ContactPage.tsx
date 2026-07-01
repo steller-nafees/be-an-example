@@ -13,6 +13,7 @@ import { Mail, MapPin, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandSettings } from "@/context/LogoContext";
 import { supabase } from "@/lib/supabase";
+import Seo from "@/components/Seo";
 
 export default function ContactPage() {
   const { toast } = useToast();
