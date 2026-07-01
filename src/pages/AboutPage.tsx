@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowRight, Award, Leaf, Package, ShieldCheck, Target, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useBrandSettings } from "@/context/LogoContext";
+import Seo from "@/components/Seo";
 
 export default function AboutPage() {
   const { settings } = useBrandSettings();
@@ -48,6 +49,11 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title="About BE AN EXAMPLE — Our Story & Values"
+        description="Learn how BE AN EXAMPLE crafts premium print-on-demand streetwear for a community that leads by example."
+        path="/about"
+      />
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-24 md:py-32 text-center max-w-4xl">
         <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6">

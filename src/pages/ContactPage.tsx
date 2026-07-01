@@ -13,6 +13,7 @@ import { Mail, MapPin, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandSettings } from "@/context/LogoContext";
 import { supabase } from "@/lib/supabase";
+import Seo from "@/components/Seo";
 
 export default function ContactPage() {
   const { toast } = useToast();
@@ -98,6 +99,11 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title="Contact BE AN EXAMPLE — We're Here to Help"
+        description="Questions about your order, sizing, or partnerships? Contact the BE AN EXAMPLE team and we'll get back to you quickly."
+        path="/contact"
+      />
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-24 md:py-32 text-center max-w-4xl">
         <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6">Get In Touch</h1>

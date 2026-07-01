@@ -4,6 +4,7 @@ import { SlidersHorizontal, X, Search } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useCollections } from "@/hooks/use-collections";
 import ProductCard from "@/components/ProductCard";
+import Seo from "@/components/Seo";
 import { useSearchParams } from "react-router-dom";
 
 const categories = ["all", "hoodies", "tshirts", "accessories"] as const;
@@ -68,6 +69,11 @@ export default function ShopPage() {
 
   return (
     <>
+      <Seo
+        title="Shop All — BE AN EXAMPLE Premium Streetwear"
+        description="Browse the full BE AN EXAMPLE collection: hoodies, tees, and accessories designed for those who set the standard."
+        path="/shop"
+      />
       <main className="pt-24 pb-24 bg-background min-h-screen">
         <div className="container mx-auto px-6">
           <motion.div

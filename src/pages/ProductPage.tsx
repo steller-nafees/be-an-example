@@ -111,6 +111,8 @@ export default function ProductPage() {
       product.seo_description?.trim() ||
       product.description?.trim() ||
       "Premium streetwear built to lead by example.";
+    const canonicalPath = window.location.pathname;
+    const image = product.images?.[0];
 
     document.title = title;
 
@@ -118,12 +120,63 @@ export default function ProductPage() {
       const element = document.head.querySelector<HTMLMetaElement>(selector);
       if (element) element.content = value;
     };
+    const upsertMeta = (attr: "name" | "property", key: string, value: string) => {
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
 
     setMeta('meta[name="description"]', description);
     setMeta('meta[property="og:title"]', title);
     setMeta('meta[property="og:description"]', description);
     setMeta('meta[name="twitter:title"]', title);
     setMeta('meta[name="twitter:description"]', description);
+    upsertMeta("property", "og:type", "product");
+    upsertMeta("property", "og:url", canonicalPath);
+    if (image) {
+      upsertMeta("property", "og:image", image);
+      upsertMeta("name", "twitter:image", image);
+    }
+
+    // canonical
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = canonicalPath;
+
+    // Product JSON-LD
+    const ldId = "ld-product";
+    document.getElementById(ldId)?.remove();
+    const ld = document.createElement("script");
+    ld.type = "application/ld+json";
+    ld.id = ldId;
+    ld.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      description,
+      image: product.images || [],
+      brand: { "@type": "Brand", name: "BE AN EXAMPLE" },
+      offers: {
+        "@type": "Offer",
+        price: product.price,
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+        url: canonicalPath,
+      },
+    });
+    document.head.appendChild(ld);
+
+    return () => {
+      document.getElementById(ldId)?.remove();
+    };
   }, [product]);
 
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);
