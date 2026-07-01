@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { productPath } from "@/lib/product-url";
 import { useCollections } from "@/hooks/use-collections";
 import { useProducts } from "@/hooks/use-products";
 
