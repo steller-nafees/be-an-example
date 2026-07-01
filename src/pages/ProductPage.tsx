@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/currency";
+import { parseProductParam } from "@/lib/product-url";
 
 /* ---------------- helpers ---------------- */
 
@@ -93,7 +94,8 @@ function createHtmlMarkup(value?: string | null) {
 /* ---------------- page ---------------- */
 
 export default function ProductPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: routeParam } = useParams<{ id: string }>();
+  const id = parseProductParam(routeParam);
   const { data: product, isLoading } = useProduct(id);
   const { data: allProducts = [] } = useProducts();
   const { data: variantColors = [] } = useProductColors(id);

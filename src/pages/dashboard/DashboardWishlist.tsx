@@ -6,6 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { useProducts } from "@/hooks/use-products";
 import PageHeader from "./_PageHeader";
 import { formatCurrency } from "@/lib/currency";
+import { productPath } from "@/lib/product-url";
 
 export default function DashboardWishlist() {
   const { items, toggle } = useWishlist();
@@ -39,7 +40,7 @@ export default function DashboardWishlist() {
               transition={{ duration: 0.5, delay: i * 0.05 }}
               className="group"
             >
-              <Link to={`/product/${p.id}`} className="block relative overflow-hidden bg-muted aspect-[3/4] rounded-lg">
+              <Link to={productPath(p)} className="block relative overflow-hidden bg-muted aspect-[3/4] rounded-lg">
                 <img src={p.image} alt={p.name} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <button
                   onClick={(e) => { e.preventDefault(); toggle(p.id); }}

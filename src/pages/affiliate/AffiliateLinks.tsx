@@ -102,7 +102,9 @@ export default function AffiliateLinks() {
             <button
               onClick={() => {
                 if (!selectedProduct) return;
-                const url = `${baseUrl}/product/${selectedProduct}?ref=${affiliate.code}`;
+                const prod = products.find((p) => p.id === selectedProduct);
+                const path = prod ? productPath(prod) : `/product/${selectedProduct}`;
+                const url = `${baseUrl}${path}?ref=${affiliate.code}`;
                 setGenerated(url);
                 navigator.clipboard.writeText(url);
                 setCopied(selectedProduct);
