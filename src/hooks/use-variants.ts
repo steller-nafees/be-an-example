@@ -22,6 +22,7 @@ export interface ProductVariant {
   printful_sync_variant_id: number | null
   stock: number
   price: number | null
+  base_cost: number | null
 }
 
 export const useProductColors = (productId: string | undefined) =>
