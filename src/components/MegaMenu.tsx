@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { productPath } from "@/lib/product-url";
 import { useCollections } from "@/hooks/use-collections";
 import { useProducts } from "@/hooks/use-products";
 
@@ -125,7 +126,7 @@ export default function MegaMenu({ onClose }: MegaMenuProps) {
             <motion.div variants={columnVariants}>
               {latestProduct?.image ? (
                 <Link
-                  to={`/product/${latestProduct.id}`}
+                  to={productPath(latestProduct)}
                   onClick={onClose}
                   className="group block relative overflow-hidden aspect-[4/5]"
                 >

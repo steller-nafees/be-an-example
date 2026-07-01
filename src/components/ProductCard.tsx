@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import type { Product } from "@/lib/products";
 import { formatCurrency } from "@/lib/currency";
 import OptimizedImage from "@/components/OptimizedImage";
+import { productPath } from "@/lib/product-url";
 
 interface Props {
   product: Product;
